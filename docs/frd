@@ -1,0 +1,469 @@
+# Functional Requirement Document (FRD)
+
+**Store In:** `docs/FRD/health-card-system-frd.md`  
+**Project:** Health Card System
+
+---
+
+# 1. Authentication Module
+
+## Purpose
+Secure user access for all system roles.
+
+## Pages
+
+- Login page
+- OTP verification page
+- Forgot password page
+- Session / device management page
+
+## Inputs
+
+- Mobile number
+- OTP
+- Email (optional)
+- Password
+- Device details
+- MFA token (Admin)
+
+## Outputs
+
+- JWT access token
+- Refresh token
+- Session ID
+- Login success / failure status
+- Device session record
+- Audit log entry
+
+## API Endpoints
+
+| Method | Endpoint |
+|--------|----------|
+| POST | /auth/login |
+| POST | /auth/otp/verify |
+| POST | /auth/password/login |
+| POST | /auth/refresh |
+| POST | /auth/logout |
+| GET | /auth/sessions |
+| POST | /auth/mfa/verify |
+
+## Validation Rules
+
+- OTP expiry
+- Password strength
+- Account lock after failed attempts
+- Device registration
+- MFA mandatory for admin roles
+- Unique active session rules (if enforced)
+
+## Role Access
+
+- Super Admin
+- Admin
+- Field Executive
+- Field Manager
+- Receptionist
+- Customer
+
+---
+
+# 2. Patient Registration Module
+
+## Purpose
+Register patient and family into membership ecosystem.
+
+## Pages
+
+- Patient registration form
+- Family member form
+- Document upload page
+- Plan selection page
+- Consent form
+- Card generation page
+
+## Inputs
+
+- Name
+- Mobile
+- DOB
+- Gender
+- Address
+- Area
+- Email
+- KYC documents
+- Consent
+- Family member details
+- Membership plan
+
+## Outputs
+
+- Patient profile
+- Family member profiles
+- Membership record
+- Health card number
+- QR code
+- PDF card
+- WhatsApp share status
+- Registration logs
+
+## API Endpoints
+
+| Method | Endpoint |
+|--------|----------|
+| POST | /patients/register |
+| POST | /patients/family-member |
+| POST | /patients/documents |
+| POST | /patients/consent |
+| POST | /cards/generate |
+| GET | /cards/:id/pdf |
+| POST | /cards/:id/share |
+
+## Validation Rules
+
+- Unique mobile number
+- Duplicate detection
+- Mandatory fields
+- Consent required
+- Valid KYC
+- Plan eligibility
+- Family size limits
+- Age validation
+
+## Role Access
+
+- Field Executive
+- Field Manager
+- Admin
+- Super Admin
+
+---
+
+# 3. Customer Dashboard Module
+
+## Purpose
+Allow customer self-service.
+
+## Pages
+
+- Customer login
+- Dashboard
+- Digital card
+- Family members
+- Profile page
+- Service history
+- Notifications
+- Support
+
+## Inputs
+
+- OTP
+- Card number
+- Profile updates
+- Support requests
+
+## Outputs
+
+- Card summary
+- Family summary
+- Service history
+- Notifications
+- Support ticket
+
+## API Endpoints
+
+| Method | Endpoint |
+|--------|----------|
+| POST | /customer/login |
+| GET | /customer/dashboard |
+| GET | /customer/card |
+| GET | /customer/family |
+| PUT | /customer/profile |
+| GET | /customer/history |
+| POST | /customer/support |
+
+## Validation Rules
+
+- Customer identity verification
+- Restricted profile edits
+- Secure session management
+
+## Role Access
+
+- Customer / Patient
+
+---
+
+# 4. Hospital Module
+
+## Purpose
+Enable patient retrieval and hospital service operations.
+
+## Pages
+
+- Search patient
+- Check-in
+- Beneficiary selection
+- Visit log
+- Service entry
+- Billing page
+- Prescription upload
+
+## Inputs
+
+- Card number
+- Phone number
+- QR
+- Patient name
+- Department
+- Doctor
+- Service type
+- Charges
+- Discount
+- Prescription files
+
+## Outputs
+
+- Patient retrieval
+- Visit entry
+- Service logs
+- Billing records
+- Prescription storage
+- Patient communication logs
+
+## API Endpoints
+
+| Method | Endpoint |
+|--------|----------|
+| GET | /patients/search |
+| POST | /visits/checkin |
+| POST | /services/usage |
+| POST | /billing/invoice |
+| POST | /billing/payment |
+| POST | /prescriptions/upload |
+
+## Validation Rules
+
+- Identity verification
+- Active card check
+- Beneficiary eligibility
+- Duplicate visit prevention
+- Billing validation
+- Branch restrictions
+
+## Role Access
+
+- Receptionist
+- Admin
+- Super Admin
+- Finance (billing)
+- Doctor (future)
+
+---
+
+# 5. Billing Module
+
+## Purpose
+Track financial lifecycle.
+
+## Pages
+
+- Invoice creation
+- Payment page
+- Refund page
+- Settlement dashboard
+
+## Inputs
+
+- Service details
+- Charges
+- Discounts
+- Payment method
+- Refund reason
+
+## Outputs
+
+- Invoice
+- Payment record
+- Refund record
+- Settlement report
+
+## API Endpoints
+
+| Method | Endpoint |
+|--------|----------|
+| POST | /invoice/create |
+| POST | /payments/process |
+| POST | /refunds/create |
+| GET | /settlements/report |
+
+## Validation Rules
+
+- Approved pricing
+- Discount policy validation
+- Refund approval
+- Duplicate payment prevention
+
+## Role Access
+
+- Finance
+- Admin
+- Super Admin
+
+---
+
+# 6. Dynamic Sidebar Module
+
+## Purpose
+DB-driven navigation and access security.
+
+## Pages
+
+- Sidebar system
+- Menu config
+- Permission config
+
+## Inputs
+
+- User role
+- Permission set
+- Feature flags
+- User overrides
+
+## Outputs
+
+- Visible menu structure
+- Allowed routes
+- Component permissions
+
+## API Endpoints
+
+| Method | Endpoint |
+|--------|----------|
+| GET | /menus/user |
+| POST | /roles |
+| POST | /permissions |
+| POST | /role-menu-access |
+
+## Validation Rules
+
+- Menu visibility by role
+- Route protection
+- Permission sync
+- Feature flag validation
+
+## Role Access
+
+- All users (view only as permitted)
+- Admin (manage)
+- Super Admin (full)
+
+---
+
+# 7. Reporting & Analytics Module
+
+## Purpose
+Operational intelligence.
+
+## Pages
+
+- Registration reports
+- Revenue reports
+- Utilization reports
+- Performance dashboards
+- Membership analytics
+
+## Inputs
+
+- Date ranges
+- Region
+- Hospital
+- Executive
+- Membership type
+
+## Outputs
+
+- Dashboard metrics
+- Charts
+- Export files
+- KPI reports
+
+## API Endpoints
+
+| Method | Endpoint |
+|--------|----------|
+| GET | /reports/registrations |
+| GET | /reports/revenue |
+| GET | /reports/utilization |
+| GET | /reports/executive |
+| GET | /reports/memberships |
+
+## Validation Rules
+
+- Role-based access
+- Date filters
+- Region restrictions
+- Export permissions
+
+## Role Access
+
+- Admin
+- Super Admin
+- Field Manager
+- Finance
+- Analytics Manager
+
+---
+
+# 8. Global Functional Rules
+
+## Security
+
+- JWT required
+- Role validation
+- Audit logging
+- Encryption
+- Consent tracking
+- Backup
+
+## Performance
+
+- Search optimisation
+- Redis caching
+- Pagination
+- DB indexing
+
+## Compliance
+
+- Privacy controls
+- Consent enforcement
+- Access logging
+- Data retention
+
+---
+
+# 9. Edge Cases
+
+Must support:
+
+- Duplicate registration
+- OTP failure
+- Card reissue
+- Payment failure
+- WhatsApp failure
+- Branch mismatch
+- Unauthorized access
+- Expired memberships
+- Session hijack prevention
+
+---
+
+# 10. Future Expansion Readiness
+
+Should support:
+
+- Mobile apps
+- Insurance claims
+- Doctor workflows
+- Franchise expansion
+- Multi-tenant white-label systems
+- Regulatory scaling

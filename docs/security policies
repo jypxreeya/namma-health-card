@@ -1,0 +1,48 @@
+# Security Policies
+
+---
+
+## Mandatory Security Layers
+
+## Authentication
+
+- JWT authentication
+- Refresh tokens
+- Multi-Factor Authentication (MFA)
+- Password hashing using Argon2
+
+---
+
+## Authorization
+
+- Role-Based Access Control (RBAC)
+- Attribute-Based Access Control (ABAC) for advanced controls
+- Dynamic database-driven menus
+
+---
+
+## Data Security
+
+- AES encryption for sensitive fields
+- TLS everywhere
+- Secure object storage
+- Secrets manager
+
+---
+
+## Compliance
+
+- Consent logs
+- Audit trails
+- Access logs
+- HIPAA / GDPR-aligned retention policies
+- Backup + disaster recovery
+
+---
+
+## Monitoring
+
+- SIEM integration
+- Intrusion alerts
+- Session anomaly detection
+- API throttling

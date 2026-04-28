@@ -1,0 +1,64 @@
+# API Documentation Structure
+
+---
+
+## Auth APIs
+
+| Method | Endpoint        | Description            |
+|--------|-----------------|------------------------|
+| POST   | /auth/login     | User login             |
+| POST   | /auth/otp       | OTP authentication     |
+| POST   | /auth/refresh   | Refresh access token   |
+| POST   | /auth/logout    | Logout session         |
+
+---
+
+## Patient APIs
+
+| Method | Endpoint               | Description              |
+|--------|------------------------|--------------------------|
+| POST   | /patients/register     | Register new patient     |
+| GET    | /patients/:id          | Get patient details      |
+| PUT    | /patients/:id          | Update patient details   |
+| POST   | /patients/:id/family   | Add family member        |
+
+---
+
+## Card APIs
+
+| Method | Endpoint           | Description              |
+|--------|--------------------|--------------------------|
+| POST   | /cards/generate    | Generate health card     |
+| GET    | /cards/:id/pdf     | Download card PDF        |
+| POST   | /cards/:id/share   | Share card digitally     |
+
+---
+
+## Hospital APIs
+
+| Method | Endpoint            | Description               |
+|--------|---------------------|---------------------------|
+| GET    | /patients/search    | Search patient records    |
+| POST   | /visits/checkin     | Patient check-in          |
+| POST   | /service-usage      | Log service utilization   |
+
+---
+
+## Billing APIs
+
+| Method | Endpoint    | Description          |
+|--------|-------------|----------------------|
+| POST   | /invoice    | Create invoice       |
+| POST   | /payment    | Process payment      |
+| POST   | /refund     | Process refund       |
+
+---
+
+## Admin APIs
+
+| Method | Endpoint       | Description              |
+|--------|----------------|--------------------------|
+| GET    | /dashboard     | Dashboard overview       |
+| POST   | /roles         | Create roles             |
+| POST   | /permissions   | Manage permissions       |
+| GET    | /menus         | Fetch menu configuration |

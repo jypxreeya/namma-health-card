@@ -1,0 +1,13 @@
+# Role Matrix
+
+| Role            | Scope                     |
+|-----------------|---------------------------|
+| Super Admin     | Full platform governance  |
+| Admin           | Operational control       |
+| Field Manager   | Team management           |
+| Field Executive | Registration + visits     |
+| Receptionist    | Patient retrieval         |
+| Doctor          | Consultations             |
+| Finance         | Billing                   |
+| Support         | Tickets                   |
+| Customer        | Self-service              |

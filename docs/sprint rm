@@ -1,0 +1,64 @@
+# Sprint Roadmap
+
+---
+
+## Sprint 0 – Foundation Setup
+
+- Repository setup
+- Documentation
+- ERD finalization
+- Security planning
+- DevOps base setup
+
+---
+
+## Sprint 1 – Access Control & Admin
+
+- Authentication module
+- Roles management
+- Permissions system
+- Dynamic sidebar
+- User management
+
+---
+
+## Sprint 2 – Patient Onboarding
+
+- Patient registration
+- Family member management
+- Health card generation
+- PDF generation
+- QR code integration
+
+---
+
+## Sprint 3 – Hospital Operations
+
+- Hospital management
+- Patient search system
+- Reception workflows
+
+---
+
+## Sprint 4 – Billing & Revenue
+
+- Billing module
+- Payments integration
+- Revenue tracking
+
+---
+
+## Sprint 5 – Customer Experience
+
+- Customer portal
+- Notifications system
+- Support module
+
+---
+
+## Sprint 6 – Intelligence & Scale
+
+- Analytics dashboards
+- Compliance systems
+- Security hardening
+- Scale / load testing

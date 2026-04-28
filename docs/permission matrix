@@ -1,0 +1,9 @@
+# Permission Matrix
+
+| Module   | Super Admin | Admin   | Executive  | Reception | Customer |
+|----------|-------------|---------|------------|-----------|----------|
+| Users    | Full        | Limited | No         | No        | Self     |
+| Patients | Full        | Full    | Create/View| View      | Self     |
+| Billing  | Full        | Full    | No         | Limited   | View     |
+| Reports  | Full        | Full    | Limited    | Limited   | No       |
+| Settings | Full        | Partial | No         | No        | No       |

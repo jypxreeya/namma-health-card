@@ -1,0 +1,665 @@
+# DATABASE ARCHITECTURE PRINCIPLES
+
+---
+
+# Global Standards for ALL Tables
+
+| Column | Type / Rule |
+|-------|-------------|
+| id | UUID PRIMARY KEY |
+| created_at | TIMESTAMP |
+| updated_at | TIMESTAMP |
+| deleted_at | TIMESTAMP NULL |
+| created_by | UUID NULL |
+| updated_by | UUID NULL |
+| status | VARCHAR |
+| version | INT DEFAULT 1 |
+
+### Global Rules
+
+- Soft delete enabled  
+- Audit triggers enabled  
+- Indexed foreign keys  
+- Redis caching for high-frequency reads  
+- Partition large transaction tables  
+- Row-level security where applicable  
+
+---
+
+# Schema Namespace Strategy
+
+- auth
+- customer
+- field_ops
+- hospital
+- medical
+- billing
+- communication
+- support
+- analytics
+- config
+
+---
+
+# 1. AUTH / IDENTITY DOMAIN
+
+## users
+
+**Purpose:** Master authentication entity.
+
+### Columns
+
+- id
+- user_code
+- role_id
+- email
+- mobile
+- password_hash
+- mfa_enabled
+- account_locked
+- last_login_at
+- status
+
+### Relationships
+
+- users → roles
+- users → sessions
+- users → login_history
+- users → audit_logs
+
+### Indexes
+
+- mobile (unique)
+- email (unique)
+- role_id (index)
+
+---
+
+## user_profiles
+
+### Columns
+
+- id
+- user_id
+- full_name
+- gender
+- dob
+- address_id
+- profile_photo_url
+
+---
+
+## roles
+
+### Columns
+
+- id
+- role_name
+- role_code
+- hierarchy_level
+- is_system
+
+---
+
+## permissions
+
+### Columns
+
+- id
+- module
+- action
+- permission_code
+
+---
+
+## role_permissions
+
+**Purpose:** Bridge table
+
+### Columns
+
+- id
+- role_id
+- permission_id
+- is_allowed
+
+---
+
+## menus
+
+### Columns
+
+- id
+- menu_group
+- menu_name
+- route
+- icon
+- sort_order
+- parent_menu_id
+
+---
+
+## role_menu_access
+
+### Columns
+
+- id
+- role_id
+- menu_id
+- can_view
+- can_create
+- can_edit
+- can_delete
+- can_export
+
+---
+
+## sessions
+
+### Columns
+
+- id
+- user_id
+- refresh_token
+- device_id
+- ip_address
+- expires_at
+
+---
+
+## login_history
+
+### Columns
+
+- id
+- user_id
+- login_at
+- device
+- ip_address
+- success_flag
+
+---
+
+## audit_logs
+
+### Columns
+
+- id
+- user_id
+- module
+- action
+- entity_type
+- entity_id
+- before_data JSONB
+- after_data JSONB
+- occurred_at
+
+---
+
+# 2. CUSTOMER DOMAIN
+
+## patients
+
+### Columns
+
+- id
+- patient_code
+- primary_mobile
+- full_name
+- email
+- dob
+- gender
+- address_id
+- registration_source
+- field_executive_id
+- kyc_status
+- consent_status
+- active_membership_id
+
+---
+
+## patient_addresses
+
+### Columns
+
+- id
+- patient_id
+- address_line_1
+- address_line_2
+- city
+- state
+- postal_code
+- geo_lat
+- geo_long
+
+---
+
+## family_members
+
+### Columns
+
+- id
+- patient_id
+- full_name
+- relationship_type
+- dob
+- gender
+- mobile
+- beneficiary_status
+
+---
+
+## patient_documents
+
+### Columns
+
+- id
+- patient_id
+- document_type
+- document_url
+- verification_status
+
+---
+
+## consent_records
+
+### Columns
+
+- id
+- patient_id
+- consent_type
+- consent_text_version
+- consent_given_at
+- ip_address
+
+---
+
+## memberships
+
+### Columns
+
+- id
+- patient_id
+- membership_plan_id
+- enrolled_at
+- valid_from
+- valid_to
+- renewal_status
+- status
+
+---
+
+## membership_plans
+
+### Columns
+
+- id
+- plan_code
+- plan_name
+- duration_days
+- family_limit
+- pricing
+- benefit_rules JSONB
+
+---
+
+## health_cards
+
+### Columns
+
+- id
+- patient_id
+- membership_id
+- card_number
+- qr_code_url
+- pdf_url
+- issue_date
+- expiry_date
+- card_status
+
+---
+
+## card_status_history
+
+### Columns
+
+- id
+- card_id
+- old_status
+- new_status
+- changed_at
+
+---
+
+# 3. FIELD OPERATIONS DOMAIN
+
+## leads
+
+- id
+- lead_name
+- mobile
+- area
+- source
+- lead_status
+
+## field_visits
+
+- id
+- executive_id
+- patient_id
+- lead_id
+- visit_date
+- route
+- visit_status
+
+## lead_conversion_logs
+
+- id
+- lead_id
+- converted_patient_id
+- conversion_date
+
+## executive_targets
+
+- id
+- executive_id
+- target_period
+- target_count
+- achieved_count
+
+---
+
+# 4. HOSPITAL DOMAIN
+
+## hospitals
+
+- id
+- hospital_code
+- hospital_name
+- registration_number
+- status
+
+## branches
+
+- id
+- hospital_id
+- branch_name
+- address
+- geo_location
+
+## departments
+
+- id
+- hospital_id
+- branch_id
+- department_name
+
+## doctors
+
+- id
+- hospital_id
+- department_id
+- doctor_name
+- specialization
+
+## reception_staff
+
+- id
+- user_id
+- hospital_id
+- branch_id
+
+---
+
+# 5. MEDICAL OPERATIONS DOMAIN
+
+## appointments
+
+- id
+- patient_id
+- hospital_id
+- doctor_id
+- appointment_date
+- appointment_status
+
+## patient_visits
+
+- id
+- patient_id
+- hospital_id
+- beneficiary_id
+- visit_date
+- visit_type
+- checked_in_by
+
+## consultations
+
+- id
+- visit_id
+- doctor_id
+- notes
+- diagnosis_summary
+
+## diagnostics
+
+- id
+- visit_id
+- test_type
+- result_file_url
+
+## service_usage
+
+- id
+- visit_id
+- service_category
+- service_name
+- service_cost
+- discount_amount
+- billed_amount
+
+## prescriptions
+
+- id
+- consultation_id
+- prescription_file_url
+
+---
+
+# 6. BILLING DOMAIN
+
+## invoices
+
+- id
+- patient_id
+- visit_id
+- invoice_number
+- subtotal
+- discount
+- total
+- payment_status
+
+## invoice_items
+
+- id
+- invoice_id
+- service_usage_id
+- item_name
+- item_cost
+
+## payments
+
+- id
+- invoice_id
+- payment_method
+- payment_reference
+- paid_amount
+- paid_at
+
+## refunds
+
+- id
+- payment_id
+- refund_reason
+- refund_amount
+- refund_status
+
+## settlements
+
+- id
+- hospital_id
+- settlement_period
+- gross_amount
+- net_amount
+
+---
+
+# 7. COMMUNICATION DOMAIN
+
+## notifications
+
+- id
+- user_id
+- notification_type
+- message
+- trigger_source
+- delivery_status
+
+## whatsapp_logs
+
+- id
+- patient_id
+- template_id
+- delivery_status
+- sent_at
+
+## sms_logs
+
+- id
+- patient_id
+- message_type
+- delivery_status
+
+## email_logs
+
+- id
+- patient_id
+- subject
+- delivery_status
+
+## template_management
+
+- id
+- template_type
+- template_name
+- template_body
+- approval_status
+
+---
+
+# 8. SUPPORT DOMAIN
+
+## tickets
+
+- id
+- patient_id
+- issue_type
+- issue_status
+- assigned_to
+
+## complaints
+
+- id
+- ticket_id
+- complaint_category
+- severity_level
+
+## feedback
+
+- id
+- patient_id
+- visit_id
+- rating
+- comments
+
+---
+
+# 9. ANALYTICS DOMAIN
+
+## event_logs
+
+- id
+- event_type
+- actor_id
+- entity_type
+- entity_id
+- metadata JSONB
+
+## dashboard_aggregates
+
+- id
+- metric_type
+- metric_date
+- metric_value
+
+## warehouse_exports
+
+- id
+- export_type
+- export_date
+- file_url
+
+---
+
+# Critical Lookup Tables
+
+- genders
+- relationship_types
+- service_categories
+- membership_statuses
+- billing_statuses
+- communication_statuses
+- document_types
+- consent_types
+
+---
+
+# Index Strategy
+
+## High Priority
+
+- mobile numbers
+- card numbers
+- invoice numbers
+- visit dates
+- patient IDs
+- role IDs
+- menu IDs
+
+---
+
+# Partition Strategy
+
+## Tables
+
+- patient_visits
+- service_usage
+- invoices
+- payments
+- audit_logs
+- notifications
+
+## By
+
+- date
+- month
+- year
+
+---
+
+# Redis Cache Strategy
+
+- User permissions
+- Sidebar menus
+- Patient search
+- Dashboard metrics
+- Membership validity

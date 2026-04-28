@@ -1,0 +1,315 @@
+# Business Requirement Document (BRD)
+
+---
+
+# 1. Project Objective
+
+Design and deploy a scalable healthcare membership ecosystem that enables:
+
+- Patient acquisition through field teams
+- Digital health card issuance
+- Family health plan enrolment
+- Hospital patient retrieval and service tracking
+- Membership lifecycle management
+- Billing and operational reporting
+- WhatsApp / SMS / customer communications
+- Multi-hospital operational expansion
+
+---
+
+# 2. Modules
+
+## A. Field Operations
+
+**Purpose:** Allow field staff to register customers and issue health cards.
+
+### Includes:
+
+- Field executive login
+- Field executive dashboard
+- Lead management
+- Direct visit logging
+- Patient registration
+- Family onboarding
+- Document capture
+- Card generation
+- Distribution tracking
+- WhatsApp sharing
+- Field reports
+
+---
+
+## B. Customer System
+
+**Purpose:** Allow customers to access and manage their health card details.
+
+### Includes:
+
+- OTP login
+- Card dashboard
+- Digital card view
+- Family management
+- Service history
+- Notifications
+- Support
+
+---
+
+## C. Hospital Operations
+
+**Purpose:** Allow hospital staff to retrieve patients and record usage.
+
+### Includes:
+
+- Patient retrieval
+- Check-in
+- Visit logs
+- Service utilisation
+- Billing
+- Claims / Discounts
+- Reporting
+
+---
+
+## D. Enterprise Controls
+
+**Purpose:** Manage access, security, and administration.
+
+### Includes:
+
+- Role management
+- Dynamic sidebar
+- Security logs
+- Consent management
+- Audit systems
+- Analytics warehouse
+
+---
+
+## E. Revenue and Growth
+
+**Purpose:** Support business monetisation and scaling.
+
+### Includes:
+
+- Membership plans
+- Hospital package partnerships
+- Service commissions
+- Renewal plans
+- Preventive package upselling
+
+---
+
+# 3. User Roles
+
+## Required Roles in Current System
+
+- Super Admin
+- Operational Admin
+- Field Executive
+- Field Manager
+- Hospital Reception
+- Customer / Patient
+- Finance Team
+- Support Team
+
+## Optional Future Roles
+
+- Doctor
+- Department Head
+- Compliance Officer
+- Analytics Manager
+- Franchise / Partner Admin
+
+## Role Purpose Summary
+
+| Role | Purpose |
+|------|---------|
+| Super Admin | Full control over the platform |
+| Operational Admin | Daily operations and oversight |
+| Field Executive | Registers patients and distributes cards |
+| Field Manager | Supervises field team performance |
+| Hospital Reception | Retrieves patients and records visits |
+| Customer / Patient | Views card, history, and notifications |
+| Finance Team | Manages billing, revenue, and settlements |
+| Support Team | Handles complaints and service queries |
+
+---
+
+# 4. Workflows
+
+## A. Field Registration Workflow
+
+1. Field executive visits customer  
+2. Opens registration form  
+3. Patient details are entered  
+4. Family member details are added  
+5. Consent is captured  
+6. Documents are uploaded  
+7. Membership plan is selected  
+8. Health card number is generated  
+9. Digital card PDF is created  
+10. Card is shared through WhatsApp  
+11. Status updated as issued / distributed
+
+---
+
+## B. Customer Access Workflow
+
+1. Customer logs in using OTP or card number  
+2. Views card dashboard  
+3. Views digital health card  
+4. Checks family members  
+5. Sees service history and notifications  
+6. Contacts support or views updates
+
+---
+
+## C. Hospital Retrieval Workflow
+
+1. Customer arrives at hospital  
+2. Reception searches by card number / phone / name / QR  
+3. Patient profile is retrieved  
+4. Identity is verified  
+5. Patient is checked in  
+6. Visit or service is recorded  
+7. Billing / discount applied if required  
+8. Confirmation message sent
+
+---
+
+## D. Admin Control Workflow
+
+1. Admin logs in  
+2. Accesses dashboard  
+3. Reviews registrations, usage, revenue  
+4. Manages users, roles, hospitals, plans, settings  
+5. Monitors logs, reports, alerts
+
+---
+
+# 5. Rules
+
+## Registration Rules
+
+- Mobile number should be unique or flagged for duplicate review
+- Required fields must be completed before submission
+- Consent must be captured before card generation
+- Family members must link under correct main customer
+- Documents required as per policy
+
+## Card Rules
+
+- Every card must have a unique card number
+- Card validity must be defined
+- Status must track active / expired / suspended / reissued
+- Card should reflect family coverage
+
+## Access Rules
+
+- Every user must have a role
+- Every role must have defined permissions
+- Users only see menus/pages allowed by role
+- Sensitive admin functions restricted
+
+## Hospital Rules
+
+- Search should support multiple identifiers
+- Users access only allowed branch data
+- Visit records stored for every service entry
+- Discounts / claims follow approved rules
+
+## Communication Rules
+
+- Messages triggered only by approved events
+- Failed WhatsApp / SMS delivery logged
+- Resend options controlled
+- Templates approved before use
+
+## Data Rules
+
+- Patient and family data stored securely
+- Audit logs record key actions
+- Critical records support traceability
+- Backups maintained
+
+---
+
+# 6. Edge Cases
+
+## Registration
+
+- Duplicate phone number
+- Missing mandatory fields
+- Invalid OTP
+- No network during registration
+- Incomplete family details
+- Document upload failure
+
+## Card
+
+- Card generation fails
+- PDF generation fails
+- WhatsApp message fails
+- Card number duplication
+- Card expiry before activation
+
+## Hospital
+
+- Patient not found
+- Wrong card number entered
+- Similar patient names
+- QR scan failure
+- Branch not authorised
+- Visit recorded twice
+
+## Permission
+
+- Role changed while logged in
+- Sidebar shows menu but API blocks access
+- Revoked permission cached
+- Excess access assigned accidentally
+
+## Communication
+
+- WhatsApp template rejected
+- Queue delayed
+- SMS gateway outage
+- Invalid number
+- Retry exceeds limit
+
+## Business
+
+- Card reissue request
+- Renewal after expiry
+- Family member removed
+- Patient transfer between hospitals
+- Revenue / discount mismatch
+
+---
+
+# 7. Compliance
+
+## Security & Privacy Compliance
+
+- Consent management recorded
+- Access to patient data role-based
+- Audit trail for important changes
+- Data in transit encrypted
+- Data at rest encrypted
+- Sensitive documents stored securely
+- Login and activity logs retained
+- Backup and recovery process exists
+- Privacy rules enforced
+
+## Operational Compliance
+
+- Only authorised staff can access patient info
+- Administrative actions traceable
+- Communication records auditable
+- Billing / discount changes reviewable
+- Retention and deletion rules defined
+
+## Future Compliance Readiness
+
+The system should support stronger healthcare/privacy regulations later without major redesign.
