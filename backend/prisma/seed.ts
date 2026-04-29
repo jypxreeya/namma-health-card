@@ -18,12 +18,12 @@ async function main() {
   const roles = await seedRoles(prisma);
   await seedPermissions(prisma, roles);
   await seedMenus(prisma, roles);
-  const adminUserId = await seedUsers(prisma, roles);
+  const userIds = await seedUsers(prisma, roles);
   await seedMembershipPlans(prisma);
   
-  if (adminUserId) {
-    await seedFieldOps(prisma, adminUserId);
-    await seedPartnerHospitals(prisma, adminUserId);
+  if (userIds['SUPER_ADMIN']) {
+    await seedFieldOps(prisma, userIds['FIELD_EXECUTIVE'] || userIds['SUPER_ADMIN']);
+    await seedPartnerHospitals(prisma, userIds['RECEPTIONIST'] || userIds['SUPER_ADMIN']);
   }
   await seedFinance(prisma);
   await seedCustomerEngagement(prisma);

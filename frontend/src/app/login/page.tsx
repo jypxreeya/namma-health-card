@@ -59,6 +59,8 @@ export default function LoginPage() {
         router.push('/field');
       } else if (user.role === 'CUSTOMER') {
         router.push('/customer');
+      } else if (user.role === 'RECEPTIONIST') {
+        router.push('/hospital');
       } else {
         router.push('/dashboard');
       }

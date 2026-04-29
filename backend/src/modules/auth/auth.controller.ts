@@ -29,7 +29,7 @@ export class AuthController {
       const payload = {
         id: user.id,
         email: user.email,
-        role: user.role.roleName,
+        role: user.role.code,
       };
 
       const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
@@ -54,7 +54,7 @@ export class AuthController {
           id: user.id,
           firstName: user.firstName,
           lastName: user.lastName,
-          role: user.role.roleName,
+          role: user.role.code,
         }
       });
     } catch (error: any) {

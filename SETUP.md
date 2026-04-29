@@ -68,3 +68,21 @@ If Docker is having issues, you can wipe the database volume:
 docker-compose down -v
 docker-compose up -d
 ```
+
+
+How to find which Database Table the data is from?
+If you see something on the screen and want to find the table, follow these 3 Steps:
+
+Step 1: Find the Frontend API call
+Open the .tsx file for that page (e.g., frontend/src/app/field/page.tsx). Look for api.get or useQuery.
+
+Example: You'll see api.get('/field/dashboard').
+Step 2: Find the Backend Route
+Go to backend/src/modules/field/field.routes.ts. Look for the path /dashboard. It will point to a controller method.
+
+Example: router.get('/dashboard', controller.getDashboard).
+Step 3: Check the Controller & Prisma
+Open the controller (e.g., field.controller.ts). Look for the getDashboard function. You will see lines like:
+
+prisma.lead.count(...) → This data comes from the leads table.
+prisma.patient.count(...) → This data comes from the patients table.
