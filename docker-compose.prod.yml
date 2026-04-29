@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://nhc_user:nhc_password@db:5432/health_card_prod
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=prod_secret_change_me
+    depends_on:
+      - db
+      - redis
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:3000/api
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=nhc_user
+      - POSTGRES_PASSWORD=nhc_password
+      - POSTGRES_DB=health_card_prod
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
