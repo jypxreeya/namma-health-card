@@ -1,10 +1,10 @@
-# Namma Health Card System - Local Setup Guide
+# Namma Health Card System - Setup Guide (Cloud DB)
 
-Welcome to the Namma Health Card System! This guide outlines how to easily set up your local development environment to match the rest of the team. We use Docker to standardize the database environment and Prisma as our ORM.
+Welcome to the Namma Health Card System! We are using a shared Supabase PostgreSQL database for real-time collaboration.
 
 ## Prerequisites
-- [Docker & Docker Compose](https://www.docker.com/products/docker-desktop) installed and running.
 - [Node.js](https://nodejs.org/) (v18+) and npm installed.
+- Access to the Supabase project credentials.
 
 ## 1. Clone the Repository
 Clone this repository to your local machine:
@@ -14,75 +14,57 @@ cd namma-health-card
 ```
 
 ## 2. Environment Configuration
-Navigate to the `backend` directory and set up your `.env` file based on the provided template:
+Navigate to the `backend` directory and set up your `.env` file:
 ```bash
 cd backend
 cp .env.example .env
 ```
-*Note: The default `.env` is pre-configured to connect to the Docker PostgreSQL instance on port `5433`.*
-
-## 3. Spin Up the Database
-Return to the root directory and spin up the Docker containers (PostgreSQL 16 and pgAdmin):
-```bash
-cd ..
-docker-compose up -d
+Ensure your `backend/.env` has the correct Supabase connection strings:
+```env
+DATABASE_URL="postgresql://postgres.hkorqkpfgncrvljdledt:[YOUR-PASSWORD]@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.hkorqkpfgncrvljdledt:[YOUR-PASSWORD]@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres"
 ```
-You can verify the database is running by accessing **pgAdmin** at `http://localhost:5050`
-- **Email:** `admin@nammahealth.com`
-- **Password:** `admin`
+**Make sure to replace `[YOUR-PASSWORD]` with the actual Supabase database password.**
 
-*(If you register the server in pgAdmin, use Host: `host.docker.internal` and Port: `5433`)*
-
-## 4. Install Dependencies
-Navigate back to the `backend` directory and install the Node packages:
+## 3. Install Dependencies & Push Schema
+Navigate to the `backend` directory, install packages, and deploy the schema to Supabase:
 ```bash
 cd backend
 npm install
-```
-
-## 5. Migrate and Seed the Database
-Apply the database schema and populate it with foundational roles, menus, permissions, and the default Super Admin user.
-```bash
-npx prisma migrate dev
+npx prisma migrate deploy
 npx prisma db seed
 ```
+*(Note: Use `migrate deploy` instead of `migrate dev` when working with a shared cloud database to avoid resetting other people's data).*
 
-## 6. Verify Installation
-To visually verify that your database is correctly structured and seeded, run:
+## 4. Running the Application
+You can now run the backend and frontend locally:
+- **Backend:** `cd backend && npm run dev`
+- **Frontend:** `cd frontend && npm run dev`
+
+Alternatively, if you want to run the backend via Docker, run from the root:
+```bash
+docker-compose up -d backend
+```
+
+## 5. Verify Installation (Prisma Studio)
+To visually inspect the cloud database tables, run:
 ```bash
 npx prisma studio
 ```
-This will open a browser tab at `http://localhost:5555` where you can inspect the tables.
+This opens `http://localhost:5555`.
 
 ---
 
-## Troubleshooting & Resetting
-If you ever need to completely wipe the local database and start fresh:
-```bash
-# This will drop the database, re-create it, run all migrations, and run the seed script.
-npx prisma migrate reset
-```
-
-If Docker is having issues, you can wipe the database volume:
-```bash
-docker-compose down -v
-docker-compose up -d
-```
-
-
-How to find which Database Table the data is from?
+## How to find which Database Table the data is from?
 If you see something on the screen and want to find the table, follow these 3 Steps:
 
 Step 1: Find the Frontend API call
 Open the .tsx file for that page (e.g., frontend/src/app/field/page.tsx). Look for api.get or useQuery.
 
-Example: You'll see api.get('/field/dashboard').
 Step 2: Find the Backend Route
 Go to backend/src/modules/field/field.routes.ts. Look for the path /dashboard. It will point to a controller method.
 
-Example: router.get('/dashboard', controller.getDashboard).
 Step 3: Check the Controller & Prisma
 Open the controller (e.g., field.controller.ts). Look for the getDashboard function. You will see lines like:
-
-prisma.lead.count(...) → This data comes from the leads table.
-prisma.patient.count(...) → This data comes from the patients table.
+- `prisma.lead.count(...)` → This data comes from the leads table.
+- `prisma.patient.count(...)` → This data comes from the patients table.
