@@ -135,4 +135,40 @@ export class RegistrationService {
       };
     });
   }
+
+  /**
+   * Save a partial registration as a DRAFT.
+   */
+  async saveDraft(payload: any, executiveId: string) {
+    const { mobile, fullName, leadId } = payload;
+
+    return await prisma.patient.upsert({
+      where: { mobile },
+      update: {
+        fullName,
+        fieldExecutiveId: executiveId,
+        status: 'DRAFT',
+      },
+      create: {
+        patientCode: `DFT-${Date.now().toString().slice(-6)}`,
+        fullName,
+        mobile,
+        fieldExecutiveId: executiveId,
+        status: 'DRAFT',
+      }
+    });
+  }
+
+  /**
+   * Fetch all drafts for a specific executive.
+   */
+  async getDrafts(executiveId: string) {
+    return await prisma.patient.findMany({
+      where: { 
+        fieldExecutiveId: executiveId,
+        status: 'DRAFT'
+      },
+      orderBy: { updatedAt: 'desc' }
+    });
+  }
 }

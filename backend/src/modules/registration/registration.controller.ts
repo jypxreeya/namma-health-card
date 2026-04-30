@@ -24,4 +24,24 @@ export class RegistrationController {
       });
     }
   };
+
+  saveDraft = async (req: Request, res: Response) => {
+    try {
+      const executiveId = (req as any).user?.id;
+      const result = await this.registrationService.saveDraft(req.body, executiveId);
+      return res.status(200).json({ status: 'success', data: result });
+    } catch (error: any) {
+      return res.status(400).json({ status: 'error', message: error.message });
+    }
+  };
+
+  getDrafts = async (req: Request, res: Response) => {
+    try {
+      const executiveId = (req as any).user?.id;
+      const result = await this.registrationService.getDrafts(executiveId);
+      return res.status(200).json({ status: 'success', data: result });
+    } catch (error: any) {
+      return res.status(400).json({ status: 'error', message: error.message });
+    }
+  };
 }

@@ -1,0 +1,13 @@
+{
+  "name": "Namma Health Executive",
+  "description": "A comprehensive healthcare management portal for field executives to register patients, track visits, and issue health cards.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "Patient Registration",
+    "Card Issuance",
+    "Visit Tracking",
+    "Analytics Dashboard"
+  ]
+}
