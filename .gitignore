@@ -23,6 +23,10 @@ health_card_pgdata/
 .DS_Store
 Thumbs.db
 
+# Next.js
+.next/
+next-env.d.ts
+
 # Prisma
 /backend/prisma/*.db
 /backend/prisma/*.db-journal

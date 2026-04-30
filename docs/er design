@@ -1,4 +1,4 @@
-https://lucid.app/lucidchart/02079dac-b0ad-4908-8576-1d2836fc01cf/edit?viewport_loc=-1971%2C-4778%2C9054%2C5061%2C0_0&invitationId=inv_e53faa23-7b0c-4985-9c30-876b3cb19754
+https://lucid.app/lucidchart/02079dac-b0ad-4908-8576-1d2836fc01cf/edit?viewport_loc=2621%2C-4483%2C7593%2C3918%2C0_0&invitationId=inv_e53faa23-7b0c-4985-9c30-876b3cb19754
 
 # DATABASE ARCHITECTURE PRINCIPLES
 
@@ -10,7 +10,7 @@ https://lucid.app/lucidchart/02079dac-b0ad-4908-8576-1d2836fc01cf/edit?viewport_
 |-------|-------------|
 | id | UUID PRIMARY KEY |
 | created_at | TIMESTAMP |
-| updated_at | TIMESTAMP |
+| updated_at | TIMESTAMP | 
 | deleted_at | TIMESTAMP NULL |
 | created_by | UUID NULL |
 | updated_by | UUID NULL |

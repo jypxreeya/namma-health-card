@@ -109,6 +109,15 @@ model User {
   failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
   lockedUntil         DateTime? @map("locked_until") @db.Timestamptz(6)
 
+  // Hierarchy (Team Management)
+  managerId   String?  @map("manager_id") @db.Uuid
+  manager     User?    @relation("TeamHierarchy", fields: [managerId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  subordinates User[]   @relation("TeamHierarchy")
+
+  // Regional Assignment
+  assignedRegionId String? @map("assigned_region_id") @db.Uuid
+  assignedRegion   Region? @relation(fields: [assignedRegionId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
   // Relations
   roleId String @map("role_id") @db.Uuid
   role   Role   @relation(fields: [roleId], references: [id], onUpdate: Cascade, onDelete: Restrict)
@@ -130,15 +139,20 @@ model User {
   executiveVisits  FieldVisit[]        @relation("ExecutiveVisits")
   leadConversions  LeadConversionLog[] @relation("LeadConversions")
   executiveTargets ExecutiveTarget[]   @relation("ExecutiveTargets")
-  areaAssignments  AreaAssignment[]    @relation("AreaAssignments")
+  areaAssignments  AreaAssignment[]
   receptionStaff   ReceptionUser[]     @relation("ReceptionStaff")
   commissions      ExecutiveCommission[] @relation("ExecutiveCommissions")
   assignedTickets  SupportTicket[]     @relation("AssignedTickets")
   executivePerformanceMetrics ExecutivePerformanceMetric[]
   operationalReports          OperationalReport[]
+  
+  sentBroadcasts   StaffBroadcast[]    @relation("SentBroadcasts")
+  approvalsRequested RegistrationApproval[] @relation("RequestedApprovals")
+  approvalsHandled   RegistrationApproval[] @relation("ApprovalsHandled")
 
   @@index([email, status, isDeleted])
   @@index([roleId])
+  @@index([managerId])
   @@map("users")
 }
 
@@ -354,6 +368,7 @@ model Patient {
   supportTickets     SupportTicket[]
   feedbacks          Feedback[]
   activityLogs       CustomerActivityLog[]
+  registrationApprovals RegistrationApproval[]
 
   @@index([mobile])
   @@index([patientCode])
@@ -630,7 +645,10 @@ model ExecutiveTarget {
 model AreaAssignment {
   id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   executiveId String @map("executive_id") @db.Uuid
-  executive   User   @relation("AreaAssignments", fields: [executiveId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  executive   User   @relation(fields: [executiveId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  territoryId String? @map("territory_id") @db.Uuid
+  territory   Territory? @relation(fields: [territoryId], references: [id], onUpdate: Cascade, onDelete: SetNull)
 
   areaName   String @map("area_name") @db.VarChar(100)
   city       String @db.VarChar(100)
@@ -643,7 +661,79 @@ model AreaAssignment {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([executiveId])
+  @@index([territoryId])
   @@map("area_assignments")
+}
+
+model Region {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  
+  users       User[]   // Staff assigned to this region
+  territories Territory[]
+
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("regions")
+}
+
+model Territory {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  regionId    String   @map("region_id") @db.Uuid
+  region      Region   @relation(fields: [regionId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  
+  areaAssignments AreaAssignment[]
+
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([regionId])
+  @@map("territories")
+}
+
+model StaffBroadcast {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  senderId    String   @map("sender_id") @db.Uuid
+  sender      User     @relation("SentBroadcasts", fields: [senderId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  
+  title       String   @db.VarChar(255)
+  message     String   @db.Text
+  priority    String   @default("NORMAL") // LOW, NORMAL, URGENT, EMERGENCY
+  targetRole  String?  @map("target_role") // Optional filter by role code
+  
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  
+  @@index([senderId])
+  @@map("staff_broadcasts")
+}
+
+model RegistrationApproval {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId       String             @map("patient_id") @db.Uuid
+  patient         Patient            @relation(fields: [patientId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  
+  requestedById   String             @map("requested_by") @db.Uuid
+  requestedBy     User               @relation("RequestedApprovals", fields: [requestedById], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  
+  assignedManagerId String?          @map("assigned_manager") @db.Uuid
+  assignedManager   User?            @relation("ApprovalsHandled", fields: [assignedManagerId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  
+  status          VerificationStatus @default(PENDING)
+  comments        String?            @db.Text
+  
+  reviewedAt      DateTime?          @map("reviewed_at") @db.Timestamptz(6)
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([patientId])
+  @@index([requestedById])
+  @@index([assignedManagerId])
+  @@index([status])
+  @@map("registration_approvals")
 }
 
 // ======================================================

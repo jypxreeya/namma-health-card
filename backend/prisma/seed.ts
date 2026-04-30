@@ -9,6 +9,7 @@ import { seedPartnerHospitals } from './seeds/hospitalOps';
 import { seedFinance } from './seeds/finance';
 import { seedCustomerEngagement } from './seeds/customerEngagement';
 import { seedAnalytics } from './seeds/analytics';
+import { seedHierarchy } from './seeds/hierarchy';
 
 const prisma = new PrismaClient();
 
@@ -20,6 +21,9 @@ async function main() {
   await seedMenus(prisma, roles);
   const userIds = await seedUsers(prisma, roles);
   await seedMembershipPlans(prisma);
+  
+  // Seed Hierarchy and Regions
+  await seedHierarchy(prisma, userIds, roles);
   
   if (userIds['SUPER_ADMIN']) {
     await seedFieldOps(prisma, userIds['FIELD_EXECUTIVE'] || userIds['SUPER_ADMIN']);
