@@ -1,44 +1,14 @@
 services:
-  health_card_dev_db:
-    image: postgres:16
-    container_name: health_card_dev_db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: ${POSTGRES_DB:-health_card_dev}
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: health_card_backend
     ports:
-      - "5433:5432"
-    volumes:
-      - health_card_pgdata:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-health_card_dev}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: health_card_pgadmin
+      - "3000:3000"
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@nammahealth.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-    ports:
-      - "5050:80"
-    depends_on:
-      health_card_dev_db:
-        condition: service_healthy
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - JWT_SECRET=${JWT_SECRET:-super_secret_jwt_key_please_change_in_production}
+      - SEED_ENV=${SEED_ENV:-dev}
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-
-volumes:
-  health_card_pgdata:
