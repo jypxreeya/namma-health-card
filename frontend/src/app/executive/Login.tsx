@@ -1,15 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldCheck, ArrowRight, Smartphone, Eye, EyeOff, BadgeCheck, Zap, User, Lock, HeartPulse, BadgeHelp, Globe } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Smartphone, Eye, EyeOff, BadgeCheck, Zap, User, Lock, HeartPulse, BadgeHelp, Globe, Users } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [staffId, setStaffId] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/');
+    // Logic: If ID starts with FM, go to FM portal. Else Executive.
+    if (staffId.startsWith('FM')) {
+      navigate('/fm');
+    } else {
+      navigate('/');
+    }
+  };
+
+  const quickLogin = (id: string, path: string) => {
+    setStaffId(id);
+    navigate(path);
   };
 
   return (
@@ -40,41 +51,38 @@ export default function Login() {
               transition={{ delay: 0.2 }}
             >
               <h2 className="text-white font-display text-5xl font-bold mb-6 leading-tight tracking-tight">
-                Empowering <br />
-                <span className="text-rose-100">Care in the Field</span>.
+                Unified <br />
+                <span className="text-rose-100">Operations Hub</span>.
               </h2>
             </motion.div>
-            <motion.p 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-white/80 text-xl mb-10 leading-relaxed font-medium max-w-sm"
-            >
-              Register patients and manage healthcare benefits across the community with our secure field operations hub.
-            </motion.p>
+            <p className="text-white/80 text-xl mb-10 leading-relaxed font-medium max-w-sm">
+              One secure portal for Field Managers, Executives, and Staff to manage the community healthcare ecosystem.
+            </p>
             
-            <div className="flex gap-4">
-              {[
-                { icon: Globe, label: "Community Driven" },
-                { icon: BadgeCheck, label: "HIPAA Compliant" }
-              ].map((item, i) => (
-                <motion.div 
-                  key={i}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 + (i * 0.1) }}
-                  className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 flex-1"
+            <div className="space-y-4">
+              <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em]">Quick Access Portals</p>
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => quickLogin('FM-001', '/fm')}
+                  className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 hover:bg-white/20 transition-all text-left group"
                 >
-                  <item.icon className="text-white w-5 h-5 mb-2" />
-                  <p className="text-white font-bold text-xs uppercase tracking-widest">{item.label}</p>
-                </motion.div>
-              ))}
+                  <Users className="text-rose-300 w-5 h-5 mb-2 group-hover:scale-110 transition-transform" />
+                  <p className="text-white font-bold text-xs uppercase tracking-widest">Field Manager</p>
+                </button>
+                <button 
+                  onClick={() => quickLogin('EX-102', '/')}
+                  className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 hover:bg-white/20 transition-all text-left group"
+                >
+                  <Smartphone className="text-blue-300 w-5 h-5 mb-2 group-hover:scale-110 transition-transform" />
+                  <p className="text-white font-bold text-xs uppercase tracking-widest">Executive</p>
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="relative z-10 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] text-white/60">
             <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-            System is operational
+            All systems online
           </div>
         </div>
 
@@ -89,7 +97,7 @@ export default function Login() {
 
           <div className="mb-10">
             <h2 className="font-display text-3xl font-bold text-slate-800 mb-2 tracking-tight">Sign In</h2>
-            <p className="text-slate-400 text-lg font-medium">Welcome back, Please enter your details.</p>
+            <p className="text-slate-400 text-lg font-medium">Please enter your staff credentials to continue.</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
@@ -105,6 +113,8 @@ export default function Login() {
                 <input 
                   id="staff-id"
                   required
+                  value={staffId}
+                  onChange={(e) => setStaffId(e.target.value)}
                   className="w-full h-14 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:border-primary focus:bg-white transition-all outline-none text-slate-700 font-medium placeholder:text-slate-300"
                   placeholder="Enter your Staff ID"
                   type="text"
@@ -120,7 +130,7 @@ export default function Login() {
                 >
                   Secret Key
                 </label>
-                <Link to="/reset-password" onClick={(e) => { e.preventDefault(); navigate('/reset-password'); }} className="text-xs font-bold text-primary hover:underline">
+                <Link to="/reset-password" className="text-xs font-bold text-primary hover:underline">
                   Forgot Password?
                 </Link>
               </div>
@@ -150,7 +160,7 @@ export default function Login() {
                 className="w-5 h-5 rounded-lg border-slate-200 text-primary focus:ring-primary cursor-pointer"
               />
               <label className="text-sm text-slate-500 font-medium cursor-pointer" htmlFor="remember">
-                Keep me logged in
+                Remember this device
               </label>
             </div>
 
