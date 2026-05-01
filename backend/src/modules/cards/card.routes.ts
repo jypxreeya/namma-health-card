@@ -3,6 +3,24 @@ import { prisma } from '../../config/prisma';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/cards/{cardNumber}:
+ *   get:
+ *     summary: Get health card details by card number
+ *     tags: [Cards]
+ *     parameters:
+ *       - in: path
+ *         name: cardNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Card details
+ *       404:
+ *         description: Card not found
+ */
 router.get('/:cardNumber', async (req, res) => {
   try {
     const { cardNumber } = req.params;

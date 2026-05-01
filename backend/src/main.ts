@@ -1,10 +1,12 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { errorHandler } from './middleware/error.middleware';
 import { prisma } from './config/prisma';
+import { setupSwagger } from './config/swagger';
 
 // Import Routers
 import { authRouter } from './modules/auth/auth.routes';
@@ -33,6 +35,15 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Stricter limiter for login/auth routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // 20 requests per 15 minutes
+  message: { message: 'Too many login attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Security & Parsing Middleware
 app.use(helmet());
 app.use(cors({
@@ -42,10 +53,14 @@ app.use(cors({
 app.use(limiter);
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(cookieParser());
 app.use(morgan('dev'));
 
+// Setup Swagger
+setupSwagger(app);
+
 // API Routes
-app.use('/api/auth', authRouter);
+app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/field', fieldRouter);
 app.use('/api/patients', patientRouter);
 app.use('/api/registration', registrationRouter);

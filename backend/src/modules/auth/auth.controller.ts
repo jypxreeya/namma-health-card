@@ -3,7 +3,25 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../config/prisma';
 
+const ACCESS_TOKEN_EXPIRY = '1h';
+const REFRESH_TOKEN_EXPIRY = '7d';
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+};
+
 export class AuthController {
+  private generateTokens = (payload: any) => {
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
+      expiresIn: ACCESS_TOKEN_EXPIRY,
+    });
+    const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET || 'refresh-secret', {
+      expiresIn: REFRESH_TOKEN_EXPIRY,
+    });
+    return { accessToken, refreshToken };
+  };
+
   login = async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
@@ -32,24 +50,25 @@ export class AuthController {
         role: user.role.code,
       };
 
-      const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
-        expiresIn: process.env.JWT_EXPIRES_IN || '1h',
-      });
+      const { accessToken, refreshToken } = this.generateTokens(payload);
 
-      // Log the session
+      // Create session with refresh token rotation
       await prisma.session.create({
         data: {
           userId: user.id,
-          token: token,
+          token: accessToken,
+          refreshToken: refreshToken,
           ipAddress: req.ip,
           userAgent: req.headers['user-agent'] || '',
-          expiresAt: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
         }
       });
 
+      res.cookie('accessToken', accessToken, { ...COOKIE_OPTIONS, maxAge: 1 * 60 * 60 * 1000 }); // 1h
+      res.cookie('refreshToken', refreshToken, { ...COOKIE_OPTIONS, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7d
+
       return res.json({
         status: 'success',
-        token,
         user: {
           id: user.id,
           firstName: user.firstName,
@@ -57,6 +76,73 @@ export class AuthController {
           role: user.role.code,
         }
       });
+    } catch (error: any) {
+      return res.status(500).json({ message: error.message });
+    }
+  };
+
+  refresh = async (req: Request, res: Response) => {
+    try {
+      const { refreshToken } = req.cookies;
+
+      if (!refreshToken) {
+        return res.status(401).json({ message: 'Refresh token missing' });
+      }
+
+      // Verify refresh token
+      const decoded: any = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'refresh-secret');
+      
+      // Check if session exists and is not revoked
+      const session = await prisma.session.findUnique({
+        where: { refreshToken },
+      });
+
+      if (!session || session.isRevoked || session.expiresAt < new Date()) {
+        return res.status(401).json({ message: 'Invalid or expired refresh token' });
+      }
+
+      // Generate new tokens (Rotation)
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } = this.generateTokens({
+        id: decoded.id,
+        email: decoded.email,
+        role: decoded.role,
+      });
+
+      // Update session with new refresh token (Rotation)
+      await prisma.session.update({
+        where: { id: session.id },
+        data: {
+          token: newAccessToken,
+          refreshToken: newRefreshToken,
+          lastActivityAt: new Date(),
+        }
+      });
+
+      res.cookie('accessToken', newAccessToken, { ...COOKIE_OPTIONS, maxAge: 1 * 60 * 60 * 1000 });
+      res.cookie('refreshToken', newRefreshToken, { ...COOKIE_OPTIONS, maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+      return res.json({ status: 'success' });
+    } catch (error: any) {
+      return res.status(401).json({ message: 'Session expired' });
+    }
+  };
+
+  logout = async (req: Request, res: Response) => {
+    try {
+      const { refreshToken } = req.cookies;
+
+      if (refreshToken) {
+        // Revoke the session in DB (Blacklisting)
+        await prisma.session.updateMany({
+          where: { refreshToken },
+          data: { isRevoked: true }
+        });
+      }
+
+      res.clearCookie('accessToken');
+      res.clearCookie('refreshToken');
+
+      return res.json({ status: 'success', message: 'Logged out successfully' });
     } catch (error: any) {
       return res.status(500).json({ message: error.message });
     }
@@ -74,16 +160,14 @@ export class AuthController {
         return res.status(404).json({ message: 'Field Executive not found' });
       }
 
-      // Generate a simple 6-digit OTP for dev/testing
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
       await prisma.user.update({
         where: { id: user.id },
         data: { otp, otpExpiresAt: expiresAt }
       });
 
-      // In production, send SMS here. For dev, we return it or log it.
       console.log(`[DEV] OTP for ${mobile}: ${otp}`);
 
       return res.json({
@@ -108,7 +192,6 @@ export class AuthController {
         return res.status(401).json({ message: 'Invalid or expired OTP' });
       }
 
-      // Clear OTP
       await prisma.user.update({
         where: { id: user.id },
         data: { otp: null, otpExpiresAt: null }
@@ -120,13 +203,24 @@ export class AuthController {
         role: user.role.code,
       };
 
-      const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
-        expiresIn: '7d', // Longer session for mobile
+      const { accessToken, refreshToken } = this.generateTokens(payload);
+
+      await prisma.session.create({
+        data: {
+          userId: user.id,
+          token: accessToken,
+          refreshToken: refreshToken,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'] || '',
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        }
       });
+
+      res.cookie('accessToken', accessToken, { ...COOKIE_OPTIONS, maxAge: 1 * 60 * 60 * 1000 });
+      res.cookie('refreshToken', refreshToken, { ...COOKIE_OPTIONS, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
       return res.json({
         status: 'success',
-        token,
         user: {
           id: user.id,
           firstName: user.firstName,
@@ -143,7 +237,6 @@ export class AuthController {
     try {
       const { id: userId, role: roleCode } = (req as any).user;
 
-      // Fetch menus accessible to this role
       const roleMenus = await prisma.roleMenuAccess.findMany({
         where: { role: { code: roleCode } },
         include: {
@@ -158,7 +251,6 @@ export class AuthController {
         orderBy: { menu: { sortOrder: 'asc' } }
       });
 
-      // Filter for parent menus only and map to clean structure
       const menus = roleMenus
         .filter(rm => !rm.menu.parentId)
         .map(rm => ({
