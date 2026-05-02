@@ -30,6 +30,10 @@ import ReportsAnalytics from '@/app/fm/Reports';
 import ComplianceAudit from '@/app/fm/Compliance';
 import CommunicationCentre from '@/app/fm/Communication';
 
+// New Integrated Portals
+import AdminApp from '@/app/admin/AdminApp';
+import CustomerApp from '@/app/cp/CustomerApp';
+
 // Temporary Mock Page for unimplemented modules (e.g. Settings)
 const MockPage = ({ title }: { title: string }) => (
   <div className="p-8 bg-white rounded-[40px] border border-slate-100 min-h-[600px] flex flex-col items-center justify-center text-center">
@@ -71,6 +75,12 @@ export default function App() {
             </FMLayout>
           } 
         />
+
+        {/* Admin Portal */}
+        <Route path="/admin/*" element={<AdminApp />} />
+
+        {/* Customer Portal */}
+        <Route path="/cp/*" element={<CustomerApp />} />
 
         {/* Executive Portal */}
         <Route 

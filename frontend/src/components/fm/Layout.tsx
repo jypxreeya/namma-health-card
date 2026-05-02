@@ -54,7 +54,7 @@ export default function FMLayout({ children }: { children: React.ReactNode }) {
                 <ShieldCheck className="text-white w-6 h-6" />
               </div>
               <div className="flex flex-col">
-                <span className="font-display font-bold text-lg tracking-tight uppercase leading-none">NAMMA HEALTH</span>
+                <span className="font-display font-bold text-lg tracking-tight uppercase leading-none">EXECUTIVE FIELD</span>
                 <span className="text-[10px] font-bold text-primary tracking-[0.2em] uppercase mt-1">Field Manager</span>
               </div>
             </div>
