@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { FinanceService } from './finance.service';
+import { sendError } from '../../utils/error-response';
 
 const financeService = new FinanceService();
 
@@ -10,7 +11,7 @@ export class FinanceController {
       const campaign = await financeService.validateCoupon(couponCode);
       res.status(200).json({ status: 'success', data: campaign });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to validate coupon');
     }
   };
 
@@ -20,7 +21,7 @@ export class FinanceController {
       const results = await financeService.getHospitalSettlements(hospitalId as string);
       res.status(200).json({ status: 'success', data: results });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load settlements');
     }
   };
 
@@ -30,7 +31,7 @@ export class FinanceController {
       const results = await financeService.getExecutiveCommissions(executiveId as string);
       res.status(200).json({ status: 'success', data: results });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load commissions');
     }
   };
 
@@ -39,7 +40,7 @@ export class FinanceController {
       const result = await financeService.recordMembershipPayment(req.body);
       res.status(201).json({ status: 'success', data: result });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to record payment');
     }
   };
 
@@ -48,7 +49,7 @@ export class FinanceController {
       const result = await financeService.processRenewal(req.body);
       res.status(201).json({ status: 'success', data: result });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to process renewal');
     }
   };
 
@@ -57,7 +58,7 @@ export class FinanceController {
       const result = await financeService.getFinanceDashboard();
       res.status(200).json({ status: 'success', data: result });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load finance dashboard');
     }
   };
 }

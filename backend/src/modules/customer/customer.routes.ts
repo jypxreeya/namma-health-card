@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { CustomerController } from './customer.controller';
 import { authGuard } from '../../guards/auth.guard';
+import { roleGuard } from '../../guards/role.guard';
+import { validate } from '../../middleware/validate.middleware';
+import { body } from 'express-validator';
 
 const router = Router();
 const customerController = new CustomerController();
@@ -16,7 +19,9 @@ const customerController = new CustomerController();
  *       200:
  *         description: OTP sent
  */
-router.post('/login', customerController.login);
+router.post('/login', validate([
+  body('mobile').isString().trim().matches(/^[0-9]{10,15}$/).withMessage('mobile must be 10 to 15 digits'),
+]), customerController.login);
 
 /**
  * @swagger
@@ -28,10 +33,14 @@ router.post('/login', customerController.login);
  *       200:
  *         description: OTP verified, login successful
  */
-router.post('/otp/verify', customerController.verifyOtp);
+router.post('/otp/verify', validate([
+  body('mobile').isString().trim().matches(/^[0-9]{10,15}$/).withMessage('mobile must be 10 to 15 digits'),
+  body('otp').isString().trim().matches(/^[0-9]{6}$/).withMessage('otp must be 6 digits'),
+  body('otpReference').isString().trim().isLength({ min: 4, max: 100 }),
+]), customerController.verifyOtp);
 
 // Protected routes
-router.use(authGuard);
+router.use(authGuard, roleGuard(['CUSTOMER']));
 
 /**
  * @swagger
@@ -101,7 +110,12 @@ router.get('/history', customerController.getHistory);
  *       201:
  *         description: Ticket created
  */
-router.post('/support/tickets', customerController.createTicket);
+router.post('/support/tickets', validate([
+  body('ticketType').isString().trim().isLength({ min: 2, max: 100 }),
+  body('subject').isString().trim().isLength({ min: 2, max: 255 }),
+  body('description').isString().trim().isLength({ min: 5, max: 2000 }),
+  body('priority').optional().isIn(['LOW', 'MEDIUM', 'HIGH', 'URGENT']),
+]), customerController.createTicket);
 
 /**
  * @swagger
@@ -115,6 +129,11 @@ router.post('/support/tickets', customerController.createTicket);
  *       201:
  *         description: Feedback submitted
  */
-router.post('/feedback', customerController.submitFeedback);
+router.post('/feedback', validate([
+  body('visitId').optional().isUUID(),
+  body('hospitalId').optional().isUUID(),
+  body('rating').isInt({ min: 1, max: 5 }),
+  body('text').optional().isString().trim().isLength({ max: 2000 }),
+]), customerController.submitFeedback);
 
 export { router as customerRouter };

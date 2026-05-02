@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { HospitalController } from './hospital.controller';
 import { authGuard } from '../../guards/auth.guard';
+import { roleGuard } from '../../guards/role.guard';
+import { validate } from '../../middleware/validate.middleware';
+import { body, query } from 'express-validator';
 
 const router = Router();
 const hospitalController = new HospitalController();
 
-router.use(authGuard);
+router.use(authGuard, roleGuard(['SUPER_ADMIN', 'ADMIN', 'RECEPTIONIST']));
 
 /**
  * @swagger
@@ -19,7 +22,9 @@ router.use(authGuard);
  *       200:
  *         description: Patient data
  */
-router.get('/patient/search', hospitalController.searchPatient);
+router.get('/patient/search', validate([
+  query('q').isString().trim().isLength({ min: 2, max: 100 }),
+]), hospitalController.searchPatient);
 
 /**
  * @swagger
@@ -33,7 +38,9 @@ router.get('/patient/search', hospitalController.searchPatient);
  *       200:
  *         description: Card validation status
  */
-router.post('/card/validate', hospitalController.validateCard);
+router.post('/card/validate', validate([
+  body('patientId').isUUID(),
+]), hospitalController.validateCard);
 
 /**
  * @swagger
@@ -47,7 +54,15 @@ router.post('/card/validate', hospitalController.validateCard);
  *       200:
  *         description: Check-in successful
  */
-router.post('/checkin', hospitalController.checkIn);
+router.post('/checkin', validate([
+  body('patientId').isUUID(),
+  body('beneficiaryId').optional().isUUID(),
+  body('hospitalId').optional().isUUID(),
+  body('branchId').optional().isUUID(),
+  body('receptionUserId').optional().isUUID(),
+  body('departmentId').optional().isUUID(),
+  body('doctorId').optional().isUUID(),
+]), hospitalController.checkIn);
 
 /**
  * @swagger
@@ -61,7 +76,15 @@ router.post('/checkin', hospitalController.checkIn);
  *       200:
  *         description: Service entry logged
  */
-router.post('/service-entry', hospitalController.serviceEntry);
+router.post('/service-entry', validate([
+  body('visitId').isUUID(),
+  body('serviceCategory').isIn(['OPD', 'DIAGNOSTIC', 'SPECIALIST', 'PHARMACY', 'EMERGENCY']),
+  body('serviceName').isString().trim().isLength({ min: 2, max: 150 }),
+  body('benefitUsed').isBoolean(),
+  body('discountGiven').isFloat({ min: 0 }),
+  body('revenueValue').optional().isFloat({ min: 0 }),
+  body('notes').optional().isString().trim().isLength({ max: 1000 }),
+]), hospitalController.serviceEntry);
 
 /**
  * @swagger
@@ -75,7 +98,9 @@ router.post('/service-entry', hospitalController.serviceEntry);
  *       200:
  *         description: List of visits
  */
-router.get('/visit-history', hospitalController.getVisitHistory);
+router.get('/visit-history', validate([
+  query('patientId').isUUID(),
+]), hospitalController.getVisitHistory);
 
 /**
  * @swagger
@@ -89,7 +114,9 @@ router.get('/visit-history', hospitalController.getVisitHistory);
  *       200:
  *         description: Dashboard data
  */
-router.get('/utilization-dashboard', hospitalController.getDashboard);
+router.get('/utilization-dashboard', validate([
+  query('hospitalId').optional().isUUID(),
+]), hospitalController.getDashboard);
 
 /**
  * @swagger
@@ -100,7 +127,9 @@ router.get('/utilization-dashboard', hospitalController.getDashboard);
  *     security:
  *       - bearerAuth: []
  */
-router.get('/departments', hospitalController.getDepartments);
+router.get('/departments', validate([
+  query('branchId').optional().isUUID(),
+]), hospitalController.getDepartments);
 
 /**
  * @swagger
@@ -111,6 +140,9 @@ router.get('/departments', hospitalController.getDepartments);
  *     security:
  *       - bearerAuth: []
  */
-router.get('/doctors', hospitalController.getDoctors);
+router.get('/doctors', validate([
+  query('branchId').optional().isUUID(),
+  query('departmentId').optional().isUUID(),
+]), hospitalController.getDoctors);
 
 export { router as hospitalRouter };

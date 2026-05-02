@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../config/prisma';
+import { getRequiredEnv } from '../../config/env';
+import { sendError } from '../../utils/error-response';
 
 const ACCESS_TOKEN_EXPIRY = '1h';
 const REFRESH_TOKEN_EXPIRY = '7d';
@@ -13,10 +15,10 @@ const COOKIE_OPTIONS = {
 
 export class AuthController {
   private generateTokens = (payload: any) => {
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
+    const accessToken = jwt.sign(payload, getRequiredEnv('JWT_SECRET'), {
       expiresIn: ACCESS_TOKEN_EXPIRY,
     });
-    const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET || 'refresh-secret', {
+    const refreshToken = jwt.sign(payload, getRequiredEnv('JWT_REFRESH_SECRET'), {
       expiresIn: REFRESH_TOKEN_EXPIRY,
     });
     return { accessToken, refreshToken };
@@ -77,7 +79,7 @@ export class AuthController {
         }
       });
     } catch (error: any) {
-      return res.status(500).json({ message: error.message });
+      return sendError(res, error, 500, 'Login failed');
     }
   };
 
@@ -90,7 +92,7 @@ export class AuthController {
       }
 
       // Verify refresh token
-      const decoded: any = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'refresh-secret');
+      const decoded: any = jwt.verify(refreshToken, getRequiredEnv('JWT_REFRESH_SECRET'));
       
       // Check if session exists and is not revoked
       const session = await prisma.session.findUnique({
@@ -144,7 +146,7 @@ export class AuthController {
 
       return res.json({ status: 'success', message: 'Logged out successfully' });
     } catch (error: any) {
-      return res.status(500).json({ message: error.message });
+      return sendError(res, error, 500, 'Logout failed');
     }
   };
 
@@ -161,22 +163,20 @@ export class AuthController {
       }
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpHash = await bcrypt.hash(otp, 10);
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
       await prisma.user.update({
         where: { id: user.id },
-        data: { otp, otpExpiresAt: expiresAt }
+        data: { otp: otpHash, otpExpiresAt: expiresAt }
       });
-
-      console.log(`[DEV] OTP for ${mobile}: ${otp}`);
 
       return res.json({
         status: 'success',
-        message: 'OTP sent successfully',
-        otp: process.env.NODE_ENV === 'development' ? otp : undefined
+        message: 'OTP sent successfully'
       });
     } catch (error: any) {
-      return res.status(500).json({ message: error.message });
+      return sendError(res, error, 500, 'Failed to start field login');
     }
   };
 
@@ -188,7 +188,8 @@ export class AuthController {
         include: { role: true }
       });
 
-      if (!user || !user.otp || user.otp !== otp || (user.otpExpiresAt && user.otpExpiresAt < new Date())) {
+      const otpMatches = user?.otp ? await bcrypt.compare(otp, user.otp) : false;
+      if (!user || !user.otp || !otpMatches || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
         return res.status(401).json({ message: 'Invalid or expired OTP' });
       }
 
@@ -229,7 +230,7 @@ export class AuthController {
         }
       });
     } catch (error: any) {
-      return res.status(500).json({ message: error.message });
+      return sendError(res, error, 500, 'Failed to verify OTP');
     }
   };
 
@@ -268,7 +269,7 @@ export class AuthController {
 
       return res.json({ status: 'success', data: menus });
     } catch (error: any) {
-      return res.status(500).json({ message: error.message });
+      return sendError(res, error, 500, 'Failed to load menus');
     }
   };
 }

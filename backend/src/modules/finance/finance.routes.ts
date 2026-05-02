@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { FinanceController } from './finance.controller';
 import { authGuard } from '../../guards/auth.guard';
+import { roleGuard } from '../../guards/role.guard';
+import { validate } from '../../middleware/validate.middleware';
+import { body, query } from 'express-validator';
 
 const router = Router();
 const financeController = new FinanceController();
 
-router.use(authGuard);
+router.use(authGuard, roleGuard(['SUPER_ADMIN', 'ADMIN']));
 
 /**
  * @swagger
@@ -19,7 +22,9 @@ router.use(authGuard);
  *       200:
  *         description: Coupon validity status
  */
-router.post('/coupons/validate', financeController.validateCoupon);
+router.post('/coupons/validate', validate([
+  body('couponCode').isString().trim().isLength({ min: 1, max: 50 }),
+]), financeController.validateCoupon);
 
 /**
  * @swagger
@@ -33,7 +38,9 @@ router.post('/coupons/validate', financeController.validateCoupon);
  *       200:
  *         description: List of settlements
  */
-router.get('/hospital-settlements', financeController.getSettlements);
+router.get('/hospital-settlements', validate([
+  query('hospitalId').optional().isUUID(),
+]), financeController.getSettlements);
 
 /**
  * @swagger
@@ -47,7 +54,9 @@ router.get('/hospital-settlements', financeController.getSettlements);
  *       200:
  *         description: List of commissions
  */
-router.get('/executive-commissions', financeController.getCommissions);
+router.get('/executive-commissions', validate([
+  query('executiveId').optional().isUUID(),
+]), financeController.getCommissions);
 
 /**
  * @swagger
@@ -61,7 +70,12 @@ router.get('/executive-commissions', financeController.getCommissions);
  *       200:
  *         description: Payment recorded
  */
-router.post('/membership-payment', financeController.recordPayment);
+router.post('/membership-payment', validate([
+  body('patientId').isUUID(),
+  body('membershipPlanId').isUUID(),
+  body('amount').isFloat({ min: 0.01 }),
+  body('paymentReference').optional().isString().trim().isLength({ max: 100 }),
+]), financeController.recordPayment);
 
 /**
  * @swagger
@@ -75,7 +89,12 @@ router.post('/membership-payment', financeController.recordPayment);
  *       200:
  *         description: Renewal processed
  */
-router.post('/renewals', financeController.processRenewal);
+router.post('/renewals', validate([
+  body('patientId').isUUID(),
+  body('previousExpiry').isISO8601(),
+  body('newExpiry').isISO8601(),
+  body('renewalType').isString().trim().isLength({ min: 2, max: 50 }),
+]), financeController.processRenewal);
 
 /**
  * @swagger

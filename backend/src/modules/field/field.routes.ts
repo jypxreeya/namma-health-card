@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { FieldController } from './field.controller';
 import { authGuard } from '../../guards/auth.guard';
+import { roleGuard } from '../../guards/role.guard';
+import { validate } from '../../middleware/validate.middleware';
+import { body } from 'express-validator';
 
 const router = Router();
 const fieldController = new FieldController();
@@ -31,8 +34,14 @@ const fieldController = new FieldController();
  *       200:
  *         description: List of leads
  */
-router.post('/leads', authGuard, fieldController.createLead);
-router.get('/leads', authGuard, fieldController.getLeads);
+const fieldRoles = roleGuard(['SUPER_ADMIN', 'ADMIN', 'FIELD_MANAGER', 'FIELD_EXECUTIVE']);
+
+router.post('/leads', authGuard, fieldRoles, validate([
+  body('mobile').isString().trim().matches(/^[0-9]{10,15}$/).withMessage('mobile must be 10 to 15 digits'),
+  body('fullName').isString().trim().isLength({ min: 2, max: 150 }),
+  body('area').optional().isString().trim().isLength({ max: 100 }),
+]), fieldController.createLead);
+router.get('/leads', authGuard, fieldRoles, fieldController.getLeads);
 
 /**
  * @swagger
@@ -52,7 +61,13 @@ router.get('/leads', authGuard, fieldController.getLeads);
  *       201:
  *         description: Visit logged
  */
-router.post('/visits', authGuard, fieldController.logVisit);
+router.post('/visits', authGuard, fieldRoles, validate([
+  body('leadId').isUUID(),
+  body('visitType').isIn(['IN_PERSON', 'CALL', 'FOLLOW_UP']),
+  body('geoLat').optional().isFloat({ min: -90, max: 90 }),
+  body('geoLong').optional().isFloat({ min: -180, max: 180 }),
+  body('notes').optional().isString().trim().isLength({ max: 1000 }),
+]), fieldController.logVisit);
 
 /**
  * @swagger
@@ -66,6 +81,6 @@ router.post('/visits', authGuard, fieldController.logVisit);
  *       200:
  *         description: Dashboard statistics
  */
-router.get('/dashboard', authGuard, fieldController.getDashboard);
+router.get('/dashboard', authGuard, fieldRoles, fieldController.getDashboard);
 
 export { router as fieldRouter };

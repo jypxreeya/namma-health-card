@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { AnalyticsController } from './analytics.controller';
 import { authGuard } from '../../guards/auth.guard';
+import { roleGuard } from '../../guards/role.guard';
+import { validate } from '../../middleware/validate.middleware';
+import { body, query } from 'express-validator';
 
 const router = Router();
 const analyticsController = new AnalyticsController();
 
-router.use(authGuard);
+router.use(authGuard, roleGuard(['SUPER_ADMIN', 'ADMIN']));
 
 /**
  * @swagger
@@ -33,7 +36,9 @@ router.get('/dashboard/overview', analyticsController.getOverview);
  *       200:
  *         description: Executive performance data
  */
-router.get('/executives/performance', analyticsController.getExecutivePerformance);
+router.get('/executives/performance', validate([
+  query('period').optional().isString().trim().matches(/^[0-9]{4}-[0-9]{2}$/),
+]), analyticsController.getExecutivePerformance);
 
 /**
  * @swagger
@@ -47,7 +52,9 @@ router.get('/executives/performance', analyticsController.getExecutivePerformanc
  *       200:
  *         description: Hospital performance data
  */
-router.get('/hospitals/performance', analyticsController.getHospitalPerformance);
+router.get('/hospitals/performance', validate([
+  query('period').optional().isString().trim().matches(/^[0-9]{4}-[0-9]{2}$/),
+]), analyticsController.getHospitalPerformance);
 
 /**
  * @swagger
@@ -61,7 +68,9 @@ router.get('/hospitals/performance', analyticsController.getHospitalPerformance)
  *       200:
  *         description: Retention data
  */
-router.get('/retention', analyticsController.getRetentionMetrics);
+router.get('/retention', validate([
+  query('period').optional().isString().trim().matches(/^[0-9]{4}-[0-9]{2}$/),
+]), analyticsController.getRetentionMetrics);
 
 /**
  * @swagger
@@ -75,7 +84,9 @@ router.get('/retention', analyticsController.getRetentionMetrics);
  *       200:
  *         description: Campaign performance data
  */
-router.get('/campaigns/performance', analyticsController.getCampaignPerformance);
+router.get('/campaigns/performance', validate([
+  query('period').optional().isString().trim().matches(/^[0-9]{4}-[0-9]{2}$/),
+]), analyticsController.getCampaignPerformance);
 
 /**
  * @swagger
@@ -103,6 +114,8 @@ router.get('/system-health', analyticsController.getSystemHealth);
  *       202:
  *         description: Aggregation started
  */
-router.post('/aggregate', analyticsController.triggerAggregation);
+router.post('/aggregate', validate([
+  body('period').isString().trim().matches(/^[0-9]{4}-[0-9]{2}$/),
+]), analyticsController.triggerAggregation);
 
 export { router as analyticsRouter };

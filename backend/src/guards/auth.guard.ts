@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { getRequiredEnv } from '../config/env';
 
 export interface AuthenticatedRequest extends Request {
   user?: any;
@@ -20,7 +21,7 @@ export const authGuard = (req: AuthenticatedRequest, res: Response, next: NextFu
       return res.status(401).json({ message: 'Unauthorized: No token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const decoded = jwt.verify(token, getRequiredEnv('JWT_SECRET'));
 
     req.user = decoded;
     next();

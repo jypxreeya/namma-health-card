@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { CustomerService } from './customer.service';
+import { sendError } from '../../utils/error-response';
 
 const customerService = new CustomerService();
 
@@ -11,7 +12,7 @@ export class CustomerController {
       const result = await customerService.initiateLogin(mobile);
       res.status(200).json({ status: 'success', data: result });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to start login');
     }
   };
 
@@ -21,7 +22,7 @@ export class CustomerController {
       const result = await customerService.verifyOtp(mobile, otp, otpReference);
       res.status(200).json({ status: 'success', data: result });
     } catch (error: any) {
-      res.status(401).json({ status: 'error', message: error.message });
+      return sendError(res, error, 401, 'Invalid or expired OTP');
     }
   };
 
@@ -32,7 +33,7 @@ export class CustomerController {
       const result = await customerService.getDashboard(patientId);
       res.status(200).json({ status: 'success', data: result });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load dashboard');
     }
   };
 
@@ -43,7 +44,7 @@ export class CustomerController {
       const result = await customerService.getDashboard(patientId);
       res.status(200).json({ status: 'success', data: result.profile });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load profile');
     }
   };
 
@@ -54,7 +55,7 @@ export class CustomerController {
       const result = await customerService.getDashboard(patientId);
       res.status(200).json({ status: 'success', data: result.activeCard });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load card');
     }
   };
 
@@ -64,7 +65,7 @@ export class CustomerController {
       const result = await customerService.getServiceHistory(patientId);
       res.status(200).json({ status: 'success', data: result });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load history');
     }
   };
 
@@ -75,7 +76,7 @@ export class CustomerController {
       const result = await customerService.createTicket(patientId, req.body);
       res.status(201).json({ status: 'success', data: result });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to create support ticket');
     }
   };
 
@@ -85,7 +86,7 @@ export class CustomerController {
       const result = await customerService.submitFeedback(patientId, req.body);
       res.status(201).json({ status: 'success', data: result });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to submit feedback');
     }
   };
 }

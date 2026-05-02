@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { AuthController } from './auth.controller';
 
 import { authGuard } from '../../guards/auth.guard';
+import { validate } from '../../middleware/validate.middleware';
+import { body } from 'express-validator';
 
 const router = Router();
 const authController = new AuthController();
@@ -32,7 +34,10 @@ const authController = new AuthController();
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', authController.login);
+router.post('/login', validate([
+  body('email').isEmail().normalizeEmail(),
+  body('password').isString().isLength({ min: 8, max: 128 }),
+]), authController.login);
 
 /**
  * @swagger
@@ -55,7 +60,9 @@ router.post('/login', authController.login);
  *       200:
  *         description: OTP sent
  */
-router.post('/field/login', authController.fieldLogin);
+router.post('/field/login', validate([
+  body('mobile').isString().trim().matches(/^[0-9]{10,15}$/).withMessage('mobile must be 10 to 15 digits'),
+]), authController.fieldLogin);
 
 /**
  * @swagger
@@ -81,7 +88,10 @@ router.post('/field/login', authController.fieldLogin);
  *       200:
  *         description: OTP verified, login successful
  */
-router.post('/field/otp/verify', authController.verifyFieldOtp);
+router.post('/field/otp/verify', validate([
+  body('mobile').isString().trim().matches(/^[0-9]{10,15}$/).withMessage('mobile must be 10 to 15 digits'),
+  body('otp').isString().trim().matches(/^[0-9]{6}$/).withMessage('otp must be 6 digits'),
+]), authController.verifyFieldOtp);
 
 /**
  * @swagger

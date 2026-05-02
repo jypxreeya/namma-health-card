@@ -1,7 +1,14 @@
 import { Request, Response } from 'express';
 import { prisma } from '../../config/prisma';
+import { getVisibleFieldExecutiveIds } from '../../utils/access-scope';
+import { sendError } from '../../utils/error-response';
 
 export class FieldController {
+  private async getLeadScope(req: Request) {
+    const user = (req as any).user;
+    const visibleExecutiveIds = await getVisibleFieldExecutiveIds(user);
+    return visibleExecutiveIds ? { assignedExecutiveId: { in: visibleExecutiveIds } } : {};
+  }
   
   createLead = async (req: Request, res: Response) => {
     try {
@@ -21,27 +28,33 @@ export class FieldController {
       });
       res.status(201).json({ status: 'success', data: lead });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to create lead');
     }
   };
 
   getLeads = async (req: Request, res: Response) => {
     try {
-      const executiveId = (req as any).user?.id;
+      const scopedWhere = await this.getLeadScope(req);
       const leads = await prisma.lead.findMany({
-        where: { assignedExecutiveId: executiveId },
+        where: scopedWhere,
         orderBy: { createdAt: 'desc' }
       });
       res.status(200).json({ status: 'success', data: leads });
     } catch (error: any) {
-      res.status(500).json({ status: 'error', message: error.message });
+      return sendError(res, error, 500, 'Failed to load leads');
     }
   };
 
   logVisit = async (req: Request, res: Response) => {
     try {
       const { leadId, visitType, geoLat, geoLong, notes } = req.body;
-      const executiveId = (req as any).user?.id;
+      const user = (req as any).user;
+      const executiveId = user.id;
+      const scopedWhere = await this.getLeadScope(req);
+      const lead = await prisma.lead.findFirst({ where: { id: leadId, ...scopedWhere } });
+      if (!lead) {
+        return res.status(404).json({ status: 'error', message: 'Lead not found' });
+      }
 
       const visit = await prisma.fieldVisit.create({
         data: {
@@ -64,23 +77,25 @@ export class FieldController {
 
       res.status(201).json({ status: 'success', data: visit });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to log visit');
     }
   };
 
   getDashboard = async (req: Request, res: Response) => {
     try {
-      const { id: executiveId } = (req as any).user;
+      const user = (req as any).user;
+      const visibleExecutiveIds = await getVisibleFieldExecutiveIds(user);
+      const executiveWhere = visibleExecutiveIds ? { in: visibleExecutiveIds } : undefined;
       
       const [totalLeads, visitsToday, conversions] = await Promise.all([
-        prisma.lead.count({ where: { assignedExecutiveId: executiveId } }),
+        prisma.lead.count({ where: { assignedExecutiveId: executiveWhere } }),
         prisma.fieldVisit.count({ 
           where: { 
-            executiveId: executiveId,
+            executiveId: executiveWhere,
             visitDate: { gte: new Date(new Date().setHours(0,0,0,0)) }
           } 
         }),
-        prisma.patient.count({ where: { fieldExecutiveId: executiveId } })
+        prisma.patient.count({ where: { fieldExecutiveId: executiveWhere } })
       ]);
 
       return res.json({
@@ -92,7 +107,7 @@ export class FieldController {
         }
       });
     } catch (error: any) {
-      return res.status(500).json({ message: error.message });
+      return sendError(res, error, 500, 'Failed to load field dashboard');
     }
   };
 }

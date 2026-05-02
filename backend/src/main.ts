@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import { errorHandler } from './middleware/error.middleware';
 import { prisma } from './config/prisma';
 import { setupSwagger } from './config/swagger';
+import { validateEnv } from './config/env';
 
 // Import Routers
 import { authRouter } from './modules/auth/auth.routes';
@@ -24,6 +25,7 @@ import { billingRouter } from './modules/billing/billing.routes';
 import rateLimit from 'express-rate-limit';
 
 dotenv.config();
+validateEnv();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

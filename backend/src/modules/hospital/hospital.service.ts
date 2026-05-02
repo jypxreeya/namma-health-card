@@ -1,5 +1,5 @@
 import { prisma } from '../../config/prisma';
-import { HospitalVisitStatus, ServiceCategory, VisitDocumentType } from '@prisma/client';
+import { ServiceCategory } from '@prisma/client';
 
 export class HospitalService {
   // 1. Patient Search (by card code, QR, mobile, or name)
@@ -136,9 +136,9 @@ export class HospitalService {
   }
 
   // 5. Visit History
-  async getVisitHistory(patientId: string) {
+  async getVisitHistory(patientId: string, hospitalId?: string) {
     return prisma.patientVisit.findMany({
-      where: { patientId },
+      where: { patientId, hospitalId },
       include: {
         hospital: { select: { hospitalName: true } },
         branch: { select: { branchName: true } },
