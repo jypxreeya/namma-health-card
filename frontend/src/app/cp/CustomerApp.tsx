@@ -17,6 +17,7 @@ export default function CustomerApp() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    document.title = "Customer Portal";
   }, [pathname]);
 
   return (

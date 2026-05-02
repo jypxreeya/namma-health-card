@@ -7,10 +7,15 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Verified } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { useEffect } from 'react';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Hospital";
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

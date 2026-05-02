@@ -2,11 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldCheck, ArrowRight, Smartphone, Eye, EyeOff, BadgeCheck, Zap, User, Lock, HeartPulse, BadgeHelp, Globe, Users } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useEffect } from 'react';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [staffId, setStaffId] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Executive Field";
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

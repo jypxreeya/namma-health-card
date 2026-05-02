@@ -31,6 +31,10 @@ export default function Layout({ children }: LayoutProps) {
   
   const isAuthPage = ['/login', '/reset-password', '/verify-otp'].includes(location.pathname);
   
+  useEffect(() => {
+    document.title = "Executive Field";
+  }, []);
+  
   if (isAuthPage) return <>{children}</>;
 
   const navItems = [

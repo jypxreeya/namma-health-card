@@ -4,6 +4,7 @@
  */
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import Login from './views/auth/Login';
 import Recovery from './views/auth/Recovery';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -19,6 +20,10 @@ import Verification from './views/checkin/Verification';
 import Admin1Portal from './Admin1Portal';
 
 export default function AdminApp() {
+  useEffect(() => {
+    document.title = "Hospital";
+  }, []);
+
   return (
     <Routes>
       {/* Auth Flow */}

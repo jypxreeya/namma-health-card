@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, ArrowRight, ShieldCheck, Heart } from 'lucide-react';
 
@@ -6,6 +6,10 @@ export default function Login() {
   const navigate = useNavigate();
   const [mobile, setMobile] = useState('');
   const [cardId, setCardId] = useState('');
+
+  useEffect(() => {
+    document.title = "Customer Portal";
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-surface-container-lowest overflow-x-hidden">
