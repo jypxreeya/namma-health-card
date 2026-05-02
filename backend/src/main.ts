@@ -19,6 +19,7 @@ import { hospitalRouter } from './modules/hospital/hospital.routes';
 import { financeRouter } from './modules/finance/finance.routes';
 import { customerRouter } from './modules/customer/customer.routes';
 import { analyticsRouter } from './modules/analytics/analytics.routes';
+import { billingRouter } from './modules/billing/billing.routes';
 
 import rateLimit from 'express-rate-limit';
 
@@ -69,6 +70,7 @@ app.use('/api/cards', cardRouter);
 app.use('/api/hospital', hospitalRouter);
 app.use('/api/finance', financeRouter);
 app.use('/api/customer', customerRouter);
+app.use('/api/billing', billingRouter);
 app.use('/api/admin/analytics', analyticsRouter);
 
 // Health Check

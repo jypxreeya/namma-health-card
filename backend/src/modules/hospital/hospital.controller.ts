@@ -63,4 +63,24 @@ export class HospitalController {
       res.status(400).json({ status: 'error', message: error.message });
     }
   };
+
+  getDepartments = async (req: Request, res: Response) => {
+    try {
+      const { branchId } = req.query;
+      const results = await hospitalService.getDepartments(branchId as string);
+      res.status(200).json({ status: 'success', data: results });
+    } catch (error: any) {
+      res.status(400).json({ status: 'error', message: error.message });
+    }
+  };
+
+  getDoctors = async (req: Request, res: Response) => {
+    try {
+      const { branchId, departmentId } = req.query;
+      const results = await hospitalService.getDoctors(branchId as string, departmentId as string);
+      res.status(200).json({ status: 'success', data: results });
+    } catch (error: any) {
+      res.status(400).json({ status: 'error', message: error.message });
+    }
+  };
 }

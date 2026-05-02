@@ -91,4 +91,26 @@ router.get('/visit-history', hospitalController.getVisitHistory);
  */
 router.get('/utilization-dashboard', hospitalController.getDashboard);
 
+/**
+ * @swagger
+ * /api/hospital/departments:
+ *   get:
+ *     summary: Get list of departments in a branch
+ *     tags: [Hospital]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/departments', hospitalController.getDepartments);
+
+/**
+ * @swagger
+ * /api/hospital/doctors:
+ *   get:
+ *     summary: Get list of doctors in a branch/department
+ *     tags: [Hospital]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/doctors', hospitalController.getDoctors);
+
 export { router as hospitalRouter };
