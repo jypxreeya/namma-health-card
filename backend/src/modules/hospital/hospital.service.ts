@@ -1,5 +1,5 @@
 import { prisma } from '../../config/prisma';
-import { HospitalVisitStatus, ServiceCategory, VisitDocumentType } from '@prisma/client';
+import { ServiceCategory } from '@prisma/client';
 
 export class HospitalService {
   // 1. Patient Search (by card code, QR, mobile, or name)
@@ -48,8 +48,10 @@ export class HospitalService {
     hospitalId: string;
     branchId: string;
     receptionUserId: string;
+    departmentId?: string;
+    doctorId?: string;
   }) {
-    const { patientId, beneficiaryId, hospitalId, branchId, receptionUserId } = payload;
+    const { patientId, beneficiaryId, hospitalId, branchId, receptionUserId, departmentId, doctorId } = payload;
 
     // Check for duplicate same-day visit
     const today = new Date();
@@ -77,6 +79,8 @@ export class HospitalService {
         beneficiaryId: beneficiaryId || null,
         hospitalId,
         branchId,
+        departmentId: departmentId || null,
+        doctorId: doctorId || null,
         checkedInById: receptionUserId,
         membershipValidated: validation.membershipValid,
         cardValidated: validation.cardValid,
@@ -132,9 +136,9 @@ export class HospitalService {
   }
 
   // 5. Visit History
-  async getVisitHistory(patientId: string) {
+  async getVisitHistory(patientId: string, hospitalId?: string) {
     return prisma.patientVisit.findMany({
-      where: { patientId },
+      where: { patientId, hospitalId },
       include: {
         hospital: { select: { hospitalName: true } },
         branch: { select: { branchName: true } },
@@ -169,5 +173,24 @@ export class HospitalService {
       totalBenefitValue: benefits._sum.benefitValue || 0,
       recentVisits
     };
+  }
+
+  // 7. Department Management
+  async getDepartments(branchId: string) {
+    return prisma.hospitalDepartment.findMany({
+      where: { branchId, status: 'ACTIVE' },
+      include: { doctors: { where: { status: 'ACTIVE' } } }
+    });
+  }
+
+  // 8. Doctor Management
+  async getDoctors(branchId: string, departmentId?: string) {
+    return prisma.hospitalDoctor.findMany({
+      where: {
+        branchId,
+        departmentId: departmentId || undefined,
+        status: 'ACTIVE'
+      }
+    });
   }
 }

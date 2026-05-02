@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
 import { RegistrationService } from './registration.service';
+import { getVisibleFieldExecutiveIds } from '../../utils/access-scope';
+import { sendError } from '../../utils/error-response';
+import { prisma } from '../../config/prisma';
 
 export class RegistrationController {
   private registrationService = new RegistrationService();
@@ -11,17 +14,27 @@ export class RegistrationController {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
+      if (req.body.leadId) {
+        const visibleExecutiveIds = await getVisibleFieldExecutiveIds((req as any).user);
+        const lead = await prisma.lead.findFirst({
+          where: {
+            id: req.body.leadId,
+            assignedExecutiveId: visibleExecutiveIds ? { in: visibleExecutiveIds } : undefined,
+          },
+          select: { id: true },
+        });
+        if (!lead) {
+          return res.status(404).json({ status: 'error', message: 'Lead not found' });
+        }
+      }
+
       const result = await this.registrationService.onboardPatient(req.body, executiveId);
       return res.status(201).json({
         status: 'success',
         data: result,
       });
     } catch (error: any) {
-      console.error('Onboarding Error:', error.message);
-      return res.status(400).json({
-        status: 'error',
-        message: error.message || 'Failed to onboard patient',
-      });
+      return sendError(res, error, 400, 'Failed to onboard patient');
     }
   };
 
@@ -31,7 +44,7 @@ export class RegistrationController {
       const result = await this.registrationService.saveDraft(req.body, executiveId);
       return res.status(200).json({ status: 'success', data: result });
     } catch (error: any) {
-      return res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to save draft');
     }
   };
 
@@ -41,7 +54,7 @@ export class RegistrationController {
       const result = await this.registrationService.getDrafts(executiveId);
       return res.status(200).json({ status: 'success', data: result });
     } catch (error: any) {
-      return res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load drafts');
     }
   };
 }

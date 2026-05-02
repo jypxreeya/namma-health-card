@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AnalyticsService } from './analytics.service';
+import { sendError } from '../../utils/error-response';
 
 const analyticsService = new AnalyticsService();
 
@@ -9,7 +10,7 @@ export class AnalyticsController {
       const stats = await analyticsService.getOverviewStats();
       res.status(200).json({ status: 'success', data: stats });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load overview');
     }
   };
 
@@ -19,7 +20,7 @@ export class AnalyticsController {
       const results = await analyticsService.getExecutivePerformance(period as string || '2026-05');
       res.status(200).json({ status: 'success', data: results });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load executive performance');
     }
   };
 
@@ -29,7 +30,7 @@ export class AnalyticsController {
       const results = await analyticsService.getHospitalUtilization(period as string || '2026-05');
       res.status(200).json({ status: 'success', data: results });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load hospital performance');
     }
   };
 
@@ -39,7 +40,7 @@ export class AnalyticsController {
       const results = await analyticsService.getRetentionMetrics(period as string || '2026-05');
       res.status(200).json({ status: 'success', data: results });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load retention metrics');
     }
   };
 
@@ -49,7 +50,7 @@ export class AnalyticsController {
       const results = await analyticsService.getCampaignPerformance(period as string || '2026-05');
       res.status(200).json({ status: 'success', data: results });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load campaign performance');
     }
   };
 
@@ -59,7 +60,7 @@ export class AnalyticsController {
       const result = await analyticsService.aggregatePerformance(period);
       res.status(200).json({ status: 'success', data: result });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to trigger aggregation');
     }
   };
 
@@ -68,7 +69,7 @@ export class AnalyticsController {
       const result = await analyticsService.getSystemHealth();
       res.status(200).json({ status: 'success', data: result });
     } catch (error: any) {
-      res.status(400).json({ status: 'error', message: error.message });
+      return sendError(res, error, 400, 'Failed to load system health');
     }
   };
 }

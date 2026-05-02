@@ -19,7 +19,7 @@ async function main() {
   const roles = await seedRoles(prisma);
   await seedPermissions(prisma, roles);
   await seedMenus(prisma, roles);
-  const userIds = await seedUsers(prisma, roles);
+  const userIds = (await seedUsers(prisma, roles)) || {};
   await seedMembershipPlans(prisma);
   
   // Seed Hierarchy and Regions

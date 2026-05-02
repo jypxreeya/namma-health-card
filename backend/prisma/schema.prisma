@@ -16,6 +16,7 @@ enum RecordStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
+  DRAFT
 }
 
 enum Gender {
@@ -90,6 +91,24 @@ enum AssignmentStatus {
   INACTIVE
 }
 
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  PARTIALLY_PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+  NET_BANKING
+  INSURANCE
+  OTHER
+}
+
 // ------------------------------------------------------
 // User Management
 // ------------------------------------------------------
@@ -106,6 +125,8 @@ model User {
   passwordHash        String    @map("password_hash") @db.VarChar(255)
   mfaEnabled          Boolean   @default(false) @map("mfa_enabled")
   mfaSecret           String?   @map("mfa_secret") @db.VarChar(255)
+  otp                 String?   @db.VarChar(255)
+  otpExpiresAt        DateTime? @map("otp_expires_at") @db.Timestamptz(6)
   failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
   lockedUntil         DateTime? @map("locked_until") @db.Timestamptz(6)
 
@@ -810,9 +831,48 @@ model HospitalBranch {
   hospital       PartnerHospital @relation(fields: [hospitalId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   receptionUsers ReceptionUser[]
   patientVisits  PatientVisit[]
+  departments    HospitalDepartment[]
+  doctors        HospitalDoctor[]
   performanceMetrics HospitalPerformanceMetric[]
 
   @@map("hospital_branches")
+}
+
+model HospitalDepartment {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId  String  @map("branch_id") @db.Uuid
+  name      String  @db.VarChar(150)
+  status    RecordStatus @default(ACTIVE)
+
+  branch    HospitalBranch @relation(fields: [branchId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  doctors   HospitalDoctor[]
+  visits    PatientVisit[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([branchId])
+  @@map("hospital_departments")
+}
+
+model HospitalDoctor {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  departmentId String  @map("department_id") @db.Uuid
+  branchId     String  @map("branch_id") @db.Uuid
+  fullName     String  @map("full_name") @db.VarChar(150)
+  specialization String? @db.VarChar(150)
+  status       RecordStatus @default(ACTIVE)
+
+  department HospitalDepartment @relation(fields: [departmentId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  branch     HospitalBranch     @relation(fields: [branchId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  visits     PatientVisit[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([departmentId])
+  @@index([branchId])
+  @@map("hospital_doctors")
 }
 
 model ReceptionUser {
@@ -837,6 +897,8 @@ model PatientVisit {
   beneficiaryId       String?     @map("beneficiary_id") @db.Uuid
   hospitalId          String      @map("hospital_id") @db.Uuid
   branchId            String      @map("branch_id") @db.Uuid
+  departmentId        String?     @map("department_id") @db.Uuid
+  doctorId            String?     @map("doctor_id") @db.Uuid
   checkedInById       String              @map("checked_in_by") @db.Uuid
   visitDate           DateTime            @default(now()) @map("visit_date") @db.Timestamptz(6)
   membershipValidated Boolean             @default(false) @map("membership_validated")
@@ -847,17 +909,53 @@ model PatientVisit {
   beneficiary         FamilyMember?   @relation("BeneficiaryVisits", fields: [beneficiaryId], references: [id], onUpdate: Cascade, onDelete: SetNull)
   hospital            PartnerHospital @relation(fields: [hospitalId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   branch              HospitalBranch  @relation(fields: [branchId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  department          HospitalDepartment? @relation(fields: [departmentId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  doctor              HospitalDoctor?     @relation(fields: [doctorId], references: [id], onUpdate: Cascade, onDelete: SetNull)
   checkedInBy         ReceptionUser   @relation("CheckedInByReception", fields: [checkedInById], references: [id], onUpdate: Cascade, onDelete: Restrict)
 
   serviceUsages       ServiceUsage[]
   visitDocuments      VisitDocument[]
   benefitUsages       CardBenefitUsage[]
+  invoice             PatientInvoice?
   feedbacks           Feedback[]
 
   @@index([visitDate])
   @@index([patientId, visitDate])
   @@index([hospitalId, visitDate])
   @@map("patient_visits")
+}
+
+model PatientInvoice {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId       String        @unique @map("visit_id") @db.Uuid
+  invoiceNumber String        @unique @map("invoice_number") @db.VarChar(50)
+  totalAmount   Decimal       @map("total_amount") @db.Decimal(10, 2)
+  discountAmount Decimal      @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  netAmount     Decimal       @map("net_amount") @db.Decimal(10, 2)
+  status        InvoiceStatus @default(DRAFT)
+
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  visit         PatientVisit  @relation(fields: [visitId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  payments      PatientPayment[]
+
+  @@index([invoiceNumber])
+  @@map("patient_invoices")
+}
+
+model PatientPayment {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId     String        @map("invoice_id") @db.Uuid
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod @map("payment_method")
+  transactionId String?       @map("transaction_id") @db.VarChar(100)
+  paymentDate   DateTime      @default(now()) @map("payment_date") @db.Timestamptz(6)
+
+  invoice       PatientInvoice @relation(fields: [invoiceId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("patient_payments")
 }
 
 model ServiceUsage {

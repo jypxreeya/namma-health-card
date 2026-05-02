@@ -1,7 +1,55 @@
 import { prisma } from '../../config/prisma';
-import { Prisma } from '@prisma/client';
+import { Prisma, RelationshipType } from '@prisma/client';
 
 export class RegistrationService {
+  private isUniqueConstraintError(error: unknown) {
+    return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+  }
+
+  private async createPatientWithRetry(tx: Prisma.TransactionClient, data: Omit<Prisma.PatientCreateInput, 'patientCode'>) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        return await tx.patient.create({
+          data: {
+            ...data,
+            patientCode: `NHC-${Date.now().toString().slice(-6)}-${attempt}`,
+          }
+        });
+      } catch (error) {
+        if (!this.isUniqueConstraintError(error) || attempt === 2) {
+          throw error;
+        }
+      }
+    }
+    throw new Error('Unable to generate a unique patient code.');
+  }
+
+  private async createHealthCardWithRetry(tx: Prisma.TransactionClient, data: Omit<Prisma.HealthCardUncheckedCreateInput, 'cardNumber'>) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        return await tx.healthCard.create({
+          data: {
+            ...data,
+            cardNumber: `CARD-${Date.now().toString().slice(-6)}-${attempt}`,
+          }
+        });
+      } catch (error) {
+        if (!this.isUniqueConstraintError(error) || attempt === 2) {
+          throw error;
+        }
+      }
+    }
+    throw new Error('Unable to generate a unique card number.');
+  }
+
+  private normalizeRelationship(value: string): RelationshipType {
+    const normalized = String(value || '').toUpperCase();
+    if (Object.values(RelationshipType).includes(normalized as RelationshipType)) {
+      return normalized as RelationshipType;
+    }
+    return RelationshipType.OTHER;
+  }
+
   /**
    * Complex Orchestration: Onboard a new Patient.
    * Wraps everything in an atomic transaction to ensure data integrity.
@@ -35,13 +83,12 @@ export class RegistrationService {
       }
 
       // 3. Create Patient & Address
-      const patientCode = `NHC-${Date.now().toString().slice(-6)}`;
-      const patient = await tx.patient.create({
-        data: {
-          patientCode,
+      const patient = await this.createPatientWithRetry(tx, {
           fullName,
           mobile,
-          fieldExecutiveId: executiveId,
+          fieldExecutive: {
+            connect: { id: executiveId }
+          },
           addresses: {
             create: {
               addressLine1: address.line1,
@@ -50,7 +97,6 @@ export class RegistrationService {
               postalCode: address.postalCode,
             }
           }
-        }
       });
 
       // 4. Log Consent
@@ -58,9 +104,9 @@ export class RegistrationService {
         data: {
           patientId: patient.id,
           consentType: 'REGISTRATION_AND_DATA_PROCESSING',
-          consentStatus: consent.granted ? 'GRANTED' : 'REVOKED',
+          consentVersion: consent.version || '1.0',
+          status: consent.granted ? 'GRANTED' : 'REVOKED',
           ipAddress: consent.ip,
-          userAgent: consent.userAgent,
         }
       });
 
@@ -70,9 +116,9 @@ export class RegistrationService {
           data: familyMembers.map((fm: any) => ({
             patientId: patient.id,
             fullName: fm.fullName,
-            relationship: fm.relationship,
+            relationshipType: this.normalizeRelationship(fm.relationship || fm.relationshipType),
             gender: fm.gender,
-            dateOfBirth: new Date(fm.dateOfBirth),
+            dob: fm.dateOfBirth ? new Date(fm.dateOfBirth) : undefined,
           })),
         });
       }
@@ -84,22 +130,19 @@ export class RegistrationService {
       const membership = await tx.membership.create({
         data: {
           patientId: patient.id,
-          planCode: plan.planCode,
-          startDate: new Date(),
-          expiryDate: expiryDate,
+          membershipPlanId: plan.id,
+          validFrom: new Date(),
+          validTo: expiryDate,
           status: 'ACTIVE',
         }
       });
 
       // 7. Generate Health Card
-      const cardNumber = `CARD-${Math.floor(100000 + Math.random() * 900000)}`;
-      const healthCard = await tx.healthCard.create({
-        data: {
+      const healthCard = await this.createHealthCardWithRetry(tx, {
           patientId: patient.id,
           membershipId: membership.id,
-          cardNumber: cardNumber,
           cardStatus: 'ISSUED',
-        }
+          expiryDate,
       });
 
       // 8. Handle Lead Conversion

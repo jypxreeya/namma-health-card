@@ -53,6 +53,11 @@ npx prisma studio
 ```
 This opens `http://localhost:5555`.
 
+## 6. API Documentation (Swagger)
+The backend includes an interactive Swagger UI to view and test all available API endpoints.
+1. Ensure the backend is running (`npm run dev`).
+2. Open your browser and navigate to: `http://localhost:3000/api-docs`
+
 ---
 
 ## How to find which Database Table the data is from?

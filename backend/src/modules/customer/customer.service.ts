@@ -1,12 +1,12 @@
 import { prisma } from '../../config/prisma';
 import { 
   NotificationType, 
-  DeliveryChannel, 
-  DeliveryStatus, 
-  TicketStatus, 
   TicketPriority 
 } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import { cacheService } from '../../services/cache.service';
+import { getRequiredEnv } from '../../config/env';
 
 export class CustomerService {
   // 1. OTP Login (Simulated OTP for now)
@@ -19,15 +19,17 @@ export class CustomerService {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpReference = `OTP-${Date.now()}`;
+    const otpHash = await bcrypt.hash(otp, 10);
+    await cacheService.set(`customer-otp:${otpReference}`, { mobile, otpHash }, 10 * 60);
 
     // Log the OTP in WhatsApp Log (simulated trigger)
-    await prisma.whatsappLog.create({
+    await prisma.whatsAppLog.create({
       data: {
         patientId: patient.id,
         triggerEvent: 'LOGIN_OTP',
         templateName: 'otp_template',
         deliveryStatus: 'SENT',
-        failureReason: `OTP: ${otp} (For testing)`
+        failureReason: 'OTP dispatch simulated'
       }
     });
 
@@ -35,7 +37,12 @@ export class CustomerService {
   }
 
   async verifyOtp(mobile: string, otp: string, otpReference: string) {
-    // In a real app, verify against Redis or DB. Here we just simulate.
+    const cachedOtp = await cacheService.get<{ mobile: string; otpHash: string }>(`customer-otp:${otpReference}`);
+    const otpMatches = cachedOtp ? await bcrypt.compare(otp, cachedOtp.otpHash) : false;
+    if (!cachedOtp || cachedOtp.mobile !== mobile || !otpMatches) {
+      throw new Error('Invalid or expired OTP.');
+    }
+
     const patient = await prisma.patient.findUnique({
       where: { mobile },
       include: { 
@@ -49,9 +56,11 @@ export class CustomerService {
     // Generate JWT for Customer
     const token = jwt.sign(
       { id: patient.id, mobile: patient.mobile, role: 'CUSTOMER' },
-      process.env.JWT_SECRET || 'secret',
+      getRequiredEnv('JWT_SECRET'),
       { expiresIn: '7d' }
     );
+
+    await cacheService.del(`customer-otp:${otpReference}`);
 
     // Create Customer Session
     await prisma.customerSession.create({
@@ -141,6 +150,20 @@ export class CustomerService {
     rating: number;
     text?: string;
   }) {
+    if (payload.visitId) {
+      const visit = await prisma.patientVisit.findFirst({
+        where: {
+          id: payload.visitId,
+          patientId,
+          hospitalId: payload.hospitalId || undefined,
+        },
+        select: { id: true },
+      });
+      if (!visit) {
+        throw new Error('Invalid visit.');
+      }
+    }
+
     return prisma.feedback.create({
       data: {
         patientId,
