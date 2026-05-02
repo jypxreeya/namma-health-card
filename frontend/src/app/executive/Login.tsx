@@ -41,7 +41,7 @@ export default function Login() {
             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg">
               <ShieldCheck className="text-primary w-6 h-6" />
             </div>
-            <h1 className="text-white font-display text-2xl font-bold tracking-tight uppercase">NAMMA HEALTH</h1>
+            <h1 className="text-white font-display text-2xl font-bold tracking-tight uppercase">EXECUTIVE FIELD</h1>
           </div>
 
           <div className="relative z-10">

@@ -55,7 +55,7 @@ export default function Layout({ children }: LayoutProps) {
             <Menu className="w-5 h-5" />
           </button>
           <Link to="/" className="text-primary font-display font-bold text-xl tracking-tighter uppercase whitespace-nowrap">
-            Namma Health
+            Executive Field
           </Link>
           
           <div className="hidden md:flex items-center bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 ml-8 max-w-md w-full focus-within:bg-white focus-within:border-primary/30 focus-within:shadow-sm transition-all group">
@@ -106,7 +106,7 @@ export default function Layout({ children }: LayoutProps) {
               className="fixed top-0 left-0 bottom-0 w-[280px] bg-white border-r border-slate-100 z-[70] flex flex-col p-6 md:hidden shadow-2xl"
             >
               <div className="flex justify-between items-center mb-8">
-                <span className="font-display font-bold text-2xl text-primary tracking-tighter uppercase">Namma</span>
+                <span className="font-display font-bold text-2xl text-primary tracking-tighter uppercase">Executive Field</span>
                 <button onClick={() => setIsSidebarOpen(false)} className="text-slate-400 p-2 hover:bg-slate-50 rounded-lg">
                   <X className="w-5 h-5" />
                 </button>
